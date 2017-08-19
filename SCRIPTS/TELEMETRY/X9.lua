@@ -5,6 +5,7 @@ SetupPages = {
    { screen = "rates1.lua" },
    { screen = "rates2.lua" },
    { screen = "filters.lua" },
+   { screen = "pwm.lua" },
    { screen = "vtx.lua" }
 }
 

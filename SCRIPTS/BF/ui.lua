@@ -109,23 +109,34 @@ end
 
 function getWriteValuesFilters(values)
    return { values[1], 
-            bit32.band(values[2],0xFF),
-            bit32.band(bit32.rshift(values[2],8),0xFF),
-            bit32.band(values[3],0xFF),
-            bit32.band(bit32.rshift(values[3],8),0xFF),
-            bit32.band(values[4],0xFF),
-            bit32.band(bit32.rshift(values[4],8),0xFF),
-            bit32.band(values[5],0xFF),
-            bit32.band(bit32.rshift(values[5],8),0xFF),            
-            bit32.band(values[8],0xFF),
-            bit32.band(bit32.rshift(values[8],8),0xFF),
-            bit32.band(values[9],0xFF),
-            bit32.band(bit32.rshift(values[9],8),0xFF),            
-            bit32.band(values[6],0xFF),
-            bit32.band(bit32.rshift(values[6],8),0xFF),
-            bit32.band(values[7],0xFF),
-            bit32.band(bit32.rshift(values[7],8),0xFF),
+            bit32.band(values[2],0xFF), bit32.band(bit32.rshift(values[2],8),0xFF),
+            bit32.band(values[3],0xFF), bit32.band(bit32.rshift(values[3],8),0xFF),
+            bit32.band(values[4],0xFF), bit32.band(bit32.rshift(values[4],8),0xFF),
+            bit32.band(values[5],0xFF), bit32.band(bit32.rshift(values[5],8),0xFF),            
+            bit32.band(values[8],0xFF), bit32.band(bit32.rshift(values[8],8),0xFF),
+            bit32.band(values[9],0xFF), bit32.band(bit32.rshift(values[9],8),0xFF),            
+            bit32.band(values[6],0xFF), bit32.band(bit32.rshift(values[6],8),0xFF),
+            bit32.band(values[7],0xFF), bit32.band(bit32.rshift(values[7],8),0xFF),
             values[10] }
+end
+
+function postReadAdvanced(page)
+   page.values[5] = mergeUint16(page.values[5], page.values[6])
+   page.values[7] = mergeUint16(page.values[7], page.values[8])
+   page.fields[2].table = page.gyroTables[page.values[9]]
+   page.fields[3].table = page.gyroTables[page.values[9]]
+end
+
+function updateGyroTables()
+   SetupPages[currentPage].fields[2].table = SetupPages[currentPage].gyroTables[SetupPages[currentPage].values[9]]
+   SetupPages[currentPage].fields[3].table = SetupPages[currentPage].gyroTables[SetupPages[currentPage].values[9]]
+end
+
+function getWriteValuesAdvanced(values)
+   return { values[1], values[2], values[3], values[4],
+            bit32.band(values[5],0xFF), bit32.rshift(values[5],8),
+            bit32.band(values[7],0xFF), bit32.rshift(values[7],8),
+            values[9], values[10]}
 end
 
 local function saveSettings(new)
@@ -229,6 +240,9 @@ function cachePageElements(page)
       if pageCache.saveTimeout then
          page.saveTimeout = pageCache.saveTimeout
       end
+      if pageCache.gyroTables then
+         page.gyroTables = pageCache.gyroTables
+      end
       page.title = pageCache.title
       page.text = pageCache.text
       page.fields = pageCache.fields
@@ -246,6 +260,7 @@ function clearPageElements(page)
    page.text = nil
    page.fields = nil
    page.values = nil
+   page.gyroTables = nil
    pageCache = nil
 end
 
