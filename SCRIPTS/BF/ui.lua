@@ -228,6 +228,7 @@ function cachePageElements(page)
       pageCache = assert(loadScript(screenPath .. page.screen))()
       page.read = pageCache.read
       page.write = pageCache.write
+      page.eepromWrite = pageCache.eepromWrite
       if pageCache.postRead then
          page.postRead = pageCache.postRead
       end
@@ -252,6 +253,7 @@ end
 function clearPageElements(page)
    page.read = nil
    page.write = nil
+   page.eepromWrite = nil
    page.postRead = nil
    page.getWriteValues = nil
    page.saveMaxRetries = nil
