@@ -70,7 +70,9 @@ function getWriteValuesVTX(values)
 end
 
 function postReadRates(page)
-   page.values[9] = mergeUint16(page.values[9], page.values[10])
+   if #(page.values) == 12 then
+      page.values[9] = mergeUint16(page.values[9], page.values[10])
+   end
 end
 
 function getWriteValuesRates(values)
@@ -80,8 +82,10 @@ function getWriteValuesRates(values)
 end
 
 function postReadRatesAdv(page)
-   page.values[20] = mergeUint16(page.values[20], page.values[21])
-   page.values[22] = mergeUint16(page.values[22], page.values[23])/1000
+   if #(page.values) == 23 then
+      page.values[20] = mergeUint16(page.values[20], page.values[21])
+      page.values[22] = mergeUint16(page.values[22], page.values[23])/1000
+   end
 end
 
 function getWriteValuesRatesAdv(values)
@@ -121,10 +125,12 @@ function getWriteValuesFilters(values)
 end
 
 function postReadAdvanced(page)
-   page.values[5] = mergeUint16(page.values[5], page.values[6])
-   page.values[7] = mergeUint16(page.values[7], page.values[8])
-   page.fields[2].table = page.gyroTables[page.values[9]]
-   page.fields[3].table = page.gyroTables[page.values[9]]
+   if #(page.values) == 10 then
+      page.values[5] = mergeUint16(page.values[5], page.values[6])
+      page.values[7] = mergeUint16(page.values[7], page.values[8])
+      page.fields[2].table = page.gyroTables[page.values[9]]
+      page.fields[3].table = page.gyroTables[page.values[9]]
+   end
 end
 
 function updateGyroTables()
