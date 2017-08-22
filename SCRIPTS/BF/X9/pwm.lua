@@ -1,6 +1,7 @@
 return {
    read              = 90, -- MSP_ADVANCED_CONFIG
    write             = 91, -- MSP_SET_ADVANCED_CONFIG
+   reboot            = true,
    eepromWrite       = true,
    postRead          = postReadAdvanced,
    getWriteValues    = getWriteValuesAdvanced,

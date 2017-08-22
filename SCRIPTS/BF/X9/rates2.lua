@@ -1,8 +1,9 @@
 
 return {
-   read = 94, -- MSP_PID_ADVANCED
-   write = 95, -- MSP_SET_PID_ADVANCED
-   title = "Rates (2/2)",
+   read           = 94, -- MSP_PID_ADVANCED
+   write          = 95, -- MSP_SET_PID_ADVANCED
+   title          = "Rates (2/2)",
+   reboot         = false,
    eepromWrite    = true,
    postRead       = postReadRatesAdv,
    getWriteValues = getWriteValuesRatesAdv,

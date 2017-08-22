@@ -1,8 +1,9 @@
 
 return {
-   read = 112, -- MSP_PID
-   write = 202, -- MSP_SET_PID
-   title = "PIDs",
+   read           = 112, -- MSP_PID
+   write          = 202, -- MSP_SET_PID
+   title          = "PIDs",
+   reboot         = false,
    eepromWrite    = true,
    text = {
       { t = "P",      x =  72,  y = 14 },

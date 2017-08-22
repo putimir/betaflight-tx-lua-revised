@@ -1,6 +1,7 @@
 -- load msp.lua
 assert(loadScript("/SCRIPTS/BF/msp_sp.lua"))()
 
+local MSP_REBOOT = 68
 local MSP_EEPROM_WRITE = 250
 
 local REQ_TIMEOUT = 80 -- 800ms request timeout
@@ -20,7 +21,6 @@ local saveTS = 0
 local saveTimeout = 0
 local saveRetries = 0
 local saveMaxRetries = 0
-local postReadPending = false
 
 backgroundFill = backgroundFill or ERASE
 foregroundColor = foregroundColor or SOLID
@@ -200,6 +200,9 @@ local function processMspReply(cmd,rx_buf)
       gState = PAGE_DISPLAY
       page.values = nil
       saveTS = 0
+      if page.reboot then
+         mspSendRequest(MSP_REBOOT,{})
+      end
       return
    end
    
@@ -229,6 +232,7 @@ function cachePageElements(page)
       page.read = pageCache.read
       page.write = pageCache.write
       page.eepromWrite = pageCache.eepromWrite
+      page.reboot = pageCache.reboot
       if pageCache.postRead then
          page.postRead = pageCache.postRead
       end
@@ -254,6 +258,7 @@ function clearPageElements(page)
    page.read = nil
    page.write = nil
    page.eepromWrite = nil
+   page.reboot = nil
    page.postRead = nil
    page.getWriteValues = nil
    page.saveMaxRetries = nil

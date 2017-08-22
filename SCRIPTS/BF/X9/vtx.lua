@@ -3,6 +3,7 @@ return {
    read           = 88, -- MSP_VTX_CONFIG
    write          = 89, -- MSP_VTX_SET_CONFIG
    eepromWrite    = false,
+   reboot         = false,
    postRead       = postReadVTX,
    getWriteValues = getWriteValuesVTX,
    saveMaxRetries = 0,
