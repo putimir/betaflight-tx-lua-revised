@@ -1,5 +1,5 @@
 -- load msp.lua
-assert(loadScript("/SCRIPTS/BF/msp_sp.lua"))()
+assert(loadScript("/SCRIPTS/BF/msp_crsf.lua"))()
 
 local MSP_REBOOT = 68
 local MSP_EEPROM_WRITE = 250
@@ -174,13 +174,20 @@ local function invalidatePages()
    saveTS = 0
 end
 
+local function rebootFc()
+   mspSendRequest(MSP_REBOOT,{})
+end
+
 local menuList = {
 
    { t = "save page",
      f = saveSettings },
 
    { t = "reload",
-     f = invalidatePages }
+     f = invalidatePages },
+   
+   { t = "reboot",
+     f = rebootFc }
 }
 
 local telemetryScreenActive = false
@@ -516,7 +523,7 @@ local function run_ui(event)
    drawScreen(page,page_locked)
    
    -- do we have valid telemetry data?
-   if getValue("RSSI") == 0 then
+   if getValue("TQly") == 0 then
       -- No!
       lcd.drawText(NoTelem[1],NoTelem[2],NoTelem[3],NoTelem[4])
       --invalidatePages()
