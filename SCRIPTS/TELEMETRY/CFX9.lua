@@ -1,4 +1,4 @@
-assert(loadScript("/SCRIPTS/BF/ui.lua"))()
+assert(loadScript("/SCRIPTS/BF/ui_crsf.lua"))()
 
 screenPath = "/SCRIPTS/BF/X9/"
 
