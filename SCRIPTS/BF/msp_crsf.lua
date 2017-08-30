@@ -1,32 +1,32 @@
---
--- MSP/SPORT code
---
 
 -- Protocol version
 MSP_VERSION = bit32.lshift(1,5)
 
 MSP_STARTFLAG = bit32.lshift(1,4)
 
--- Sensor ID used by the local LUA script
-LOCAL_SENSOR_ID  = 0x0D
+-- CRSF Devices
+CRSF_ADDRESS_BETAFLIGHT          = 0xC8
+CRSF_ADDRESS_RADIO_TRANSMITTER   = 0xEA
 
--- Sensor ID used by the MSP server (BF, CF, MW, etc...)
-REMOTE_SENSOR_ID = 0x1B
+-- CRSF Frame Types
+CRSF_FRAMETYPE_MSP_REQ           = 0x7A      -- response request using msp sequence as command
+CRSF_FRAMETYPE_MSP_RESP          = 0x7B      -- reply with 60 byte chunked binary
+CRSF_FRAMETYPE_MSP_WRITE         = 0x7C      -- write with 60 byte chunked binary 
 
-REQUEST_FRAME_ID = 0x27
-REPLY_FRAME_ID   = REQUEST_FRAME_ID
-
-PAYLOAD_SIZE = 30
+MSP_PAYLOAD_SIZE                = 58
 
 -- Sequence number for next MSP packet
 local mspSeq = 0
 local mspRemoteSeq = 0
 
+local crsfMspCmd = 0
+local crsfMspHeader = {}
 local mspRxBuf = {}
 local mspRxIdx = 1
 local mspRxCRC = 0
 local mspStarted = false
 local mspLastReq = 0
+local debug = true
 
 -- Stats
 mspRequestsSent    = 0
@@ -56,13 +56,29 @@ local mspTxPk = 0
 
 local function mspSendCrossfire(payload)
 
-   payloadOut = { REMOTE_SENSOR_ID, LOCAL_SENSOR_ID }
+   local payloadOut = { CRSF_ADDRESS_BETAFLIGHT, CRSF_ADDRESS_RADIO_TRANSMITTER }
 
-   for i=1; #(payload) do
-      payloadOut[i+2] = payload[math.abs(#(payload)-i)+1]
+   for i=1, #(payload) do
+      payloadOut[i+2] = payload[i]
    end
 
-   crossfireTelemetryPush(REQUEST_FRAME_ID, payloadOut)
+   if debug then
+      local f = io.open(logFile,"a")
+      local out = string.format("TX:0x%0X,", crsfMspCmd)
+      if f then
+         for i=1, #(payloadOut) do
+            out = out .. string.format("0x%0X",payloadOut[i])
+            if i < #(payloadOut) then
+               out = out .. ","
+            end
+         end
+      end
+      out = out .. "\n"
+      io.write(f, out)
+      io.close(f)
+   end
+
+   crossfireTelemetryPush(crsfMspCmd, payloadOut)
    mspTxPk = mspTxPk + 1
 
 end
@@ -87,7 +103,7 @@ function mspProcessTxQ()
    end
 
    local i = 2
-   while (i <= PAYLOAD_SIZE) do
+   while (i <= MSP_PAYLOAD_SIZE) do
       if mspTxIdx > #(mspTxBuf) then
          break
       end
@@ -97,15 +113,15 @@ function mspProcessTxQ()
       i = i + 1
    end
 
-   if i <= PAYLOAD_SIZE then
+   if i <= MSP_PAYLOAD_SIZE then
       payload[i] = mspTxCRC
-      i = i + 1
+      --i = i + 1
 
       -- zero fill
-      while i <= PAYLOAD_SIZE do
-         payload[i] = 0
-         i = i + 1
-      end
+      --while i <= MSP_PAYLOAD_SIZE do
+      --   payload[i] = 0
+      --   i = i + 1
+      --end
 
       mspSendCrossfire(payload)
       
@@ -120,10 +136,20 @@ function mspProcessTxQ()
    return true
 end
 
-function mspSendRequest(cmd,payload)
+function mspReadPackage(cmd)
+   crsfMspCmd = CRSF_FRAMETYPE_MSP_REQ
+   return mspSendRequest(cmd, {})
+end
+
+function mspWritePackage(cmd, payload)
+   crsfMspCmd = CRSF_FRAMETYPE_MSP_WRITE
+   return mspSendRequest(cmd, payload)
+end
+
+function mspSendRequest(cmd, payload)
 
    -- busy
-   if #(mspTxBuf) ~= 0 then
+   if #(mspTxBuf) ~= 0 or not cmd then
       return nil
    end
 
@@ -154,10 +180,6 @@ local function mspReceivedReply(payload)
 
       mspErrorPk = mspErrorPk + 1
 
-      -- return error
-      -- CRC checking missing
-
-      --return payload[idx]
       return nil
    end
    
@@ -186,14 +208,14 @@ local function mspReceivedReply(payload)
       return nil
    end
 
-   while (idx <= PAYLOAD_SIZE) and (mspRxIdx <= mspRxSize) do
+   while (idx <= MSP_PAYLOAD_SIZE) and (mspRxIdx <= mspRxSize) do
       mspRxBuf[mspRxIdx] = payload[idx]
       mspRxCRC = bit32.bxor(mspRxCRC,payload[idx])
       mspRxIdx = mspRxIdx + 1
       idx = idx + 1
    end
 
-   if idx > PAYLOAD_SIZE then
+   if idx > MSP_PAYLOAD_SIZE then
       mspRemoteSeq = seq
       return true
    end
@@ -213,10 +235,35 @@ end
 function mspPollReply()
    while true do
       local command, data = crossfireTelemetryPop()
-      if command == REPLY_FRAME_ID then
-         local ret = mspReceivedReply(data)
-         if type(ret) == "table" then
-            return mspLastReq,ret
+      if debug and command then
+         local f = io.open(logFile,"a")
+         local out = string.format("RX:0x%0X,", command)
+         if f then
+            for i=1, #(data) do
+               out = out .. string.format("0x%0X",data[i])
+               if i < #(data) then
+                  out = out .. ","
+               end
+            end
+         end
+         out = out .. "\n"
+         io.write(f, out)
+         io.close(f)
+      end
+      if command == CRSF_FRAMETYPE_MSP_RESP then
+         if data[1] == CRSF_ADDRESS_RADIO_TRANSMITTER and data[2] == CRSF_ADDRESS_BETAFLIGHT then
+
+            local mspData = {}
+
+            for i=3, #(data) do
+                mspData[i-2] = data[i]
+            end
+
+            local ret = mspReceivedReply(mspData)
+
+            if type(ret) == "table" then
+               return mspLastReq,ret
+            end
          end
       else
          break

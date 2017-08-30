@@ -1,6 +1,21 @@
 -- load msp.lua
 assert(loadScript("/SCRIPTS/BF/msp_crsf.lua"))()
 
+screenPath = "/SCRIPTS/BF/X9/"
+
+SetupPages = {
+   { screen = "pids.lua" },
+   { screen = "rates1.lua" },
+   { screen = "rates2.lua" },
+   { screen = "filters.lua" },
+   { screen = "pwm.lua" },
+   { screen = "vtx.lua" }
+}
+
+MenuBox = { x=40, y=12, w=120, x_offset=36, h_line=8, h_offset=3 }
+SaveBox = { x=40, y=12, w=120, x_offset=4,  h=30, h_offset=5 }
+NoTelem = { 70, 55, "No Telemetry", BLINK }
+
 local MSP_REBOOT = 68
 local MSP_EEPROM_WRITE = 250
 
@@ -21,6 +36,8 @@ local saveTS = 0
 local saveTimeout = 0
 local saveRetries = 0
 local saveMaxRetries = 0
+local pageRequested = false
+local debug = true
 
 backgroundFill = backgroundFill or ERASE
 foregroundColor = foregroundColor or SOLID
@@ -146,12 +163,17 @@ function getWriteValuesAdvanced(values)
 end
 
 local function saveSettings(new)
+   if debug then 
+      local f = io.open(logFile, "a")
+      io.write(f,"Saving...\n")
+      io.close(f)
+   end
    local page = SetupPages[currentPage]
    if page.values then
       if page.getWriteValues then
-         mspSendRequest(page.write,page.getWriteValues(page.values))
+         mspWritePackage(page.write, getWriteValues(page.values))
       else
-         mspSendRequest(page.write,page.values)
+         mspWritePackage(page.write, page.values)
       end
       saveTS = getTime()
       if gState == PAGE_SAVING then
@@ -175,7 +197,21 @@ local function invalidatePages()
 end
 
 local function rebootFc()
-   mspSendRequest(MSP_REBOOT,{})
+   if debug then 
+      local f = io.open(logFile, "a")
+      io.write(f,"Rebooting...\n")
+      io.close(f)
+   end
+   mspReadPackage(MSP_REBOOT)
+end
+
+local function eepromWrite() 
+   if debug then 
+      local f = io.open(logFile, "a")
+      io.write(f,"Rebooting...\n")
+      io.close(f)
+   end
+   mspReadPackage(MSP_EEPROM_WRITE)
 end
 
 local menuList = {
@@ -204,8 +240,9 @@ local function processMspReply(cmd,rx_buf)
    -- ignore replies to write requests for now
    if cmd == page.write then
       if page.eepromWrite then
-         mspSendRequest(MSP_EEPROM_WRITE,{})
+         eepromWrite()
       end
+      pageRequested = false
       return
    end
 
@@ -214,7 +251,7 @@ local function processMspReply(cmd,rx_buf)
       page.values = nil
       saveTS = 0
       if page.reboot then
-         mspSendRequest(MSP_REBOOT,{})
+         rebootFc()
       end
       return
    end
@@ -315,7 +352,7 @@ end
 local function requestPage(page)
    if page.read and ((page.reqTS == nil) or (page.reqTS + REQ_TIMEOUT <= getTime())) then
       page.reqTS = getTime()
-      mspSendRequest(page.read,{})
+      mspReadPackage(page.read)
    end
 end
 
@@ -423,7 +460,7 @@ end
 local lastRunTS = 0
 local killEnterBreak = 0
 
-local function run_ui(event)
+function run_bf_ui(event)
 
    local now = getTime()
 
@@ -491,6 +528,8 @@ local function run_ui(event)
          if page.values and page.values[idx] and (field.ro ~= true) then
             gState = EDITING
          end
+      elseif event == EVT_EXIT_BREAK then
+         currentMenuState = menuStates["Crossfire"]         
       end
    -- editing value
    elseif gState == EDITING then
@@ -506,12 +545,17 @@ local function run_ui(event)
    local page = SetupPages[currentPage]
    local page_locked = false
 
-   cachePageElements(page)
-
-   if not page.values then
+   if not page.values then 
+      if not pageRequested then
       -- request values
-      requestPage(page)
+         cachePageElements(page)
+         requestPage(page)
+         pageRequested = true
+      end
       page_locked = true
+   else
+      page_locked = false
+      pageRequested = false
    end
 
    -- draw screen
@@ -541,4 +585,4 @@ local function run_ui(event)
    return 0
 end
 
-return run_ui
+--return { run=run_ui }
