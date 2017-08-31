@@ -18,7 +18,7 @@ SaveBox = { x=40, y=12, w=120, x_offset=4,  h=30, h_offset=5 }
 NoTelem = { 70, 55, "No Telemetry", BLINK }
 
 menuStates = { ["Crossfire"] = 1, ["Betaflight"] = 2 }
-currentMenuState = 2
+currentMenuState = 1
 
 debug = false
 
@@ -86,7 +86,7 @@ end
 local function init()
   lineIndex = 0
   pageOffset = 0
-  currentMenuState = 2
+  currentMenuState = 1
   if debug then
     local device = createDevice(0xC8,"Betaflight")
     devices[#devices+1]=device

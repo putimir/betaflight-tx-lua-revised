@@ -319,6 +319,7 @@ function clearPageElements(page)
    page.values = nil
    page.gyroTables = nil
    pageCache = nil
+   collectgarbage()
 end
 
 local function incPage(inc)
@@ -545,17 +546,11 @@ function run_bf_ui(event)
    local page = SetupPages[currentPage]
    local page_locked = false
 
+   cachePageElements(page)
+
    if not page.values then 
-      if not pageRequested then
-      -- request values
-         cachePageElements(page)
-         requestPage(page)
-         pageRequested = true
-      end
+      requestPage(page)
       page_locked = true
-   else
-      page_locked = false
-      pageRequested = false
    end
 
    -- draw screen

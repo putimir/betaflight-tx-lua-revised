@@ -13,7 +13,7 @@ CRSF_FRAMETYPE_MSP_REQ           = 0x7A      -- response request using msp seque
 CRSF_FRAMETYPE_MSP_RESP          = 0x7B      -- reply with 60 byte chunked binary
 CRSF_FRAMETYPE_MSP_WRITE         = 0x7C      -- write with 60 byte chunked binary 
 
-MSP_PAYLOAD_SIZE                = 58
+MSP_PAYLOAD_SIZE                = 8 -- limited by opentx 
 
 -- Sequence number for next MSP packet
 local mspSeq = 0
@@ -115,13 +115,13 @@ function mspProcessTxQ()
 
    if i <= MSP_PAYLOAD_SIZE then
       payload[i] = mspTxCRC
-      --i = i + 1
+      i = i + 1
 
       -- zero fill
-      --while i <= MSP_PAYLOAD_SIZE do
-      --   payload[i] = 0
-      --   i = i + 1
-      --end
+      while i <= MSP_PAYLOAD_SIZE do
+         payload[i] = 0
+         i = i + 1
+      end
 
       mspSendCrossfire(payload)
       
