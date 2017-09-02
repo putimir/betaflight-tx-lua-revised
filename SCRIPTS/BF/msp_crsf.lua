@@ -1,7 +1,6 @@
 
 -- Protocol version
 MSP_VERSION = bit32.lshift(1,5)
-
 MSP_STARTFLAG = bit32.lshift(1,4)
 
 -- CRSF Devices
@@ -13,7 +12,8 @@ CRSF_FRAMETYPE_MSP_REQ           = 0x7A      -- response request using msp seque
 CRSF_FRAMETYPE_MSP_RESP          = 0x7B      -- reply with 60 byte chunked binary
 CRSF_FRAMETYPE_MSP_WRITE         = 0x7C      -- write with 60 byte chunked binary 
 
-MSP_PAYLOAD_SIZE                = 8 -- limited by opentx 
+MSP_TX_PAYLOAD_SIZE                = 8 -- limited to 16 by opentx 
+MSP_RX_PAYLOAD_SIZE                = 58 -- fifo supports up to 256
 
 -- Sequence number for next MSP packet
 local mspSeq = 0
@@ -103,7 +103,7 @@ function mspProcessTxQ()
    end
 
    local i = 2
-   while (i <= MSP_PAYLOAD_SIZE) do
+   while (i <= MSP_TX_PAYLOAD_SIZE) do
       if mspTxIdx > #(mspTxBuf) then
          break
       end
@@ -113,12 +113,12 @@ function mspProcessTxQ()
       i = i + 1
    end
 
-   if i <= MSP_PAYLOAD_SIZE then
+   if i <= MSP_TX_PAYLOAD_SIZE then
       payload[i] = mspTxCRC
       i = i + 1
 
       -- zero fill
-      while i <= MSP_PAYLOAD_SIZE do
+      while i <= MSP_TX_PAYLOAD_SIZE do
          payload[i] = 0
          i = i + 1
       end
@@ -208,14 +208,14 @@ local function mspReceivedReply(payload)
       return nil
    end
 
-   while (idx <= MSP_PAYLOAD_SIZE) and (mspRxIdx <= mspRxSize) do
+   while (idx <= MSP_RX_PAYLOAD_SIZE) and (mspRxIdx <= mspRxSize) do
       mspRxBuf[mspRxIdx] = payload[idx]
       mspRxCRC = bit32.bxor(mspRxCRC,payload[idx])
       mspRxIdx = mspRxIdx + 1
       idx = idx + 1
    end
 
-   if idx > MSP_PAYLOAD_SIZE then
+   if idx > MSP_RX_PAYLOAD_SIZE then
       mspRemoteSeq = seq
       return true
    end
