@@ -26,7 +26,7 @@ local mspRxIdx = 1
 local mspRxCRC = 0
 local mspStarted = false
 local mspLastReq = 0
-local debug = true
+local debug = false
 
 -- Stats
 mspRequestsSent    = 0

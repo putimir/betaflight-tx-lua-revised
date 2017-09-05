@@ -3,18 +3,22 @@ assert(loadScript("/SCRIPTS/BF/msp_crsf.lua"))()
 
 screenPath = "/SCRIPTS/BF/X9/"
 
-SetupPages = {
-   { screen = "pids.lua" },
-   { screen = "rates1.lua" },
-   { screen = "rates2.lua" },
-   { screen = "filters.lua" },
-   { screen = "pwm.lua" },
-   { screen = "vtx.lua" }
-}
+SetupPages = {}
+
+PageFiles = {
+               "pids.lua",
+               "rates1.lua",
+               "rates2.lua",
+               "filters.lua",
+               "pwm.lua",
+               "vtx.lua" 
+            }
 
 MenuBox = { x=40, y=12, w=120, x_offset=36, h_line=8, h_offset=3 }
 SaveBox = { x=40, y=12, w=120, x_offset=4,  h=30, h_offset=5 }
 NoTelem = { 70, 55, "No Telemetry", BLINK }
+
+local memUsed = 0
 
 local MSP_REBOOT = 68
 local MSP_EEPROM_WRITE = 250
@@ -29,7 +33,6 @@ local MENU_DISP    = 5
 
 local gState = PAGE_DISPLAY
 
-local pageCache = nil
 local currentPage = 1
 local currentLine = 1
 local saveTS = 0
@@ -37,7 +40,7 @@ local saveTimeout = 0
 local saveRetries = 0
 local saveMaxRetries = 0
 local pageRequested = false
-local debug = true
+local debug = false
 
 backgroundFill = backgroundFill or ERASE
 foregroundColor = foregroundColor or SOLID
@@ -171,7 +174,7 @@ local function saveSettings(new)
    local page = SetupPages[currentPage]
    if page.values then
       if page.getWriteValues then
-         mspWritePackage(page.write, getWriteValues(page.values))
+         mspWritePackage(page.write, page.getWriteValues(page.values))
       else
          mspWritePackage(page.write, page.values)
       end
@@ -208,7 +211,7 @@ end
 local function eepromWrite() 
    if debug then 
       local f = io.open(logFile, "a")
-      io.write(f,"Rebooting...\n")
+      io.write(f,"Writing...\n")
       io.close(f)
    end
    mspReadPackage(MSP_EEPROM_WRITE)
@@ -277,54 +280,13 @@ local function MaxLines()
 end
 
 function cachePageElements(page)
-   if not pageCache then
-      pageCache = assert(loadScript(screenPath .. page.screen))()
-      page.read = pageCache.read
-      page.write = pageCache.write
-      page.eepromWrite = pageCache.eepromWrite
-      page.reboot = pageCache.reboot
-      if pageCache.postRead then
-         page.postRead = pageCache.postRead
-      end
-      if pageCache.getWriteValues then
-         page.getWriteValues = pageCache.getWriteValues
-      end
-      if pageCache.saveMaxRetries then
-         page.saveMaxRetries = pageCache.saveMaxRetries
-      end
-      if pageCache.saveTimeout then
-         page.saveTimeout = pageCache.saveTimeout
-      end
-      if pageCache.gyroTables then
-         page.gyroTables = pageCache.gyroTables
-      end
-      page.title = pageCache.title
-      page.text = pageCache.text
-      page.fields = pageCache.fields
-   end
-end
-
-function clearPageElements(page)
-   page.read = nil
-   page.write = nil
-   page.eepromWrite = nil
-   page.reboot = nil
-   page.postRead = nil
-   page.getWriteValues = nil
-   page.saveMaxRetries = nil
-   page.saveTimeout = nil
-   page.title = nil
-   page.text = nil
-   page.fields = nil
-   page.values = nil
-   page.gyroTables = nil
-   pageCache = nil
-   collectgarbage()
+   SetupPages[currentPage] = nil
+   return 
 end
 
 local function incPage(inc)
    currentPage = currentPage + inc
-   if currentPage > #(SetupPages) then
+   if currentPage > #(SetupPages) and currentPage > #(PageFiles) then
       currentPage = 1
    elseif currentPage < 1 then
       currentPage = #(SetupPages)
@@ -513,10 +475,10 @@ function run_bf_ui(event)
    -- normal page viewing
    elseif gState <= PAGE_DISPLAY then
       if event == EVT_PAGEUP_FIRST then
-         clearPageElements(SetupPages[currentPage])
+         SetupPages[currentPage] = nil
          incPage(-1)
       elseif event == EVT_MENU_BREAK or event == EVT_PAGEDN_FIRST then
-         clearPageElements(SetupPages[currentPage])
+         SetupPages[currentPage] = nil
          incPage(1)
       elseif event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT then
          incLine(-1)
@@ -530,6 +492,7 @@ function run_bf_ui(event)
             gState = EDITING
          end
       elseif event == EVT_EXIT_BREAK then
+         SetupPages[currentPage] = nil
          currentMenuState = menuStates["Crossfire"]         
       end
    -- editing value
@@ -543,10 +506,13 @@ function run_bf_ui(event)
       end
    end
 
-   local page = SetupPages[currentPage]
+   if SetupPages[currentPage] == nil then
+      SetupPages[currentPage] = assert(loadScript(screenPath .. PageFiles[currentPage]))()
+   end
+
    local page_locked = false
 
-   cachePageElements(page)
+   local page = SetupPages[currentPage]
 
    if not page.values then 
       requestPage(page)

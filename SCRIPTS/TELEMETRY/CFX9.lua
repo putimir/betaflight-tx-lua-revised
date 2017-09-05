@@ -1,17 +1,6 @@
 assert(loadScript("/SCRIPTS/BF/ui_crsf.lua"))()
 
-screenPath = "/SCRIPTS/BF/X9/"
-
 logFile = "/SCRIPTS/BF/crsfOut.log"
-
-SetupPages = {
-   { screen = "pids.lua" },
-   { screen = "rates1.lua" },
-   { screen = "rates2.lua" },
-   { screen = "filters.lua" },
-   { screen = "pwm.lua" },
-   { screen = "vtx.lua" }
-}
 
 MenuBox = { x=40, y=12, w=120, x_offset=36, h_line=8, h_offset=3 }
 SaveBox = { x=40, y=12, w=120, x_offset=4,  h=30, h_offset=5 }
@@ -122,7 +111,7 @@ local function run(event)
               break
             else
               crossfireTelemetryPush(0x28, { devices[i].id, 0xEA })
-              return "/SCRIPTS/CROSSFIRE/device.lua"
+              return "device.lua"
             end
         end
         lcd.drawText(0, i*8+9, devices[i].name, attr)
