@@ -11,7 +11,7 @@ PageFiles = {
                "rates2.lua",
                "filters.lua",
                "pwm.lua",
-               "vtx.lua" 
+               "vtx.lua"
             }
 
 MenuBox = { x=40, y=12, w=120, x_offset=36, h_line=8, h_offset=3 }
@@ -132,30 +132,64 @@ function postReadFilters(page)
 end
 
 function getWriteValuesFilters(values)
-   return { values[1], 
+   return { values[1],
             bit32.band(values[2],0xFF), bit32.band(bit32.rshift(values[2],8),0xFF),
             bit32.band(values[3],0xFF), bit32.band(bit32.rshift(values[3],8),0xFF),
             bit32.band(values[4],0xFF), bit32.band(bit32.rshift(values[4],8),0xFF),
-            bit32.band(values[5],0xFF), bit32.band(bit32.rshift(values[5],8),0xFF),            
+            bit32.band(values[5],0xFF), bit32.band(bit32.rshift(values[5],8),0xFF),
             bit32.band(values[8],0xFF), bit32.band(bit32.rshift(values[8],8),0xFF),
-            bit32.band(values[9],0xFF), bit32.band(bit32.rshift(values[9],8),0xFF),            
+            bit32.band(values[9],0xFF), bit32.band(bit32.rshift(values[9],8),0xFF),
             bit32.band(values[6],0xFF), bit32.band(bit32.rshift(values[6],8),0xFF),
             bit32.band(values[7],0xFF), bit32.band(bit32.rshift(values[7],8),0xFF),
             values[10] }
+end
+
+function updateRateTables()
+   if SetupPages[currentPage].values[9] == 0 then
+      calculateGyroRates(SetupPages[currentPage], 8)
+      calculatePidRates(SetupPages[currentPage], 8)
+   elseif SetupPages[currentPage].values[9] == 1 then
+      calculateGyroRates(SetupPages[currentPage], 32)
+      calculatePidRates(SetupPages[currentPage], 32)
+   end
+end
+
+function updatePidRateTable()
+   local newRateIdx = SetupPages[currentPage].values[1]
+   local newRate = SetupPages[currentPage].gyroRates[newRateIdx]
+   calculatePidRates(SetupPages[currentPage], newRate)
+end
+
+function calculateGyroRates(page, baseRate)
+   page.gyroRates = {}
+   page.fields[2].table = {}
+   for i=1, 32 do
+      page.gyroRates[i] = baseRate/i
+      local fmt = nil
+      page.fields[2].table[i] = string.format("%.2f",baseRate/i)
+   end
+end
+
+function calculatePidRates(page, baseRate)
+   page.fields[3].table = {}
+   for i=1, 16 do
+      page.fields[3].table[i] = string.format("%.2f",baseRate/i)
+   end
 end
 
 function postReadAdvanced(page)
    if #(page.values) == 10 then
       page.values[5] = mergeUint16(page.values[5], page.values[6])
       page.values[7] = mergeUint16(page.values[7], page.values[8])
-      page.fields[2].table = page.gyroTables[page.values[9]]
-      page.fields[3].table = page.gyroTables[page.values[9]]
    end
-end
-
-function updateGyroTables()
-   SetupPages[currentPage].fields[2].table = SetupPages[currentPage].gyroTables[SetupPages[currentPage].values[9]]
-   SetupPages[currentPage].fields[3].table = SetupPages[currentPage].gyroTables[SetupPages[currentPage].values[9]]
+   local newRateIdx = page.values[1]
+   if page.values[9] == 0 then
+      calculateGyroRates(page, 8)
+   else
+      calculateGyroRates(page, 32)
+   end
+   local newRate = page.gyroRates[newRateIdx]
+   calculatePidRates(page, newRate)
 end
 
 function getWriteValuesAdvanced(values)
@@ -166,7 +200,7 @@ function getWriteValuesAdvanced(values)
 end
 
 local function saveSettings(new)
-   if debug then 
+   if debug then
       local f = io.open(logFile, "a")
       io.write(f,"Saving...\n")
       io.close(f)
@@ -200,7 +234,7 @@ local function invalidatePages()
 end
 
 local function rebootFc()
-   if debug then 
+   if debug then
       local f = io.open(logFile, "a")
       io.write(f,"Rebooting...\n")
       io.close(f)
@@ -208,8 +242,8 @@ local function rebootFc()
    mspReadPackage(MSP_REBOOT)
 end
 
-local function eepromWrite() 
-   if debug then 
+local function eepromWrite()
+   if debug then
       local f = io.open(logFile, "a")
       io.write(f,"Writing...\n")
       io.close(f)
@@ -224,7 +258,7 @@ local menuList = {
 
    { t = "reload",
      f = invalidatePages },
-   
+
    { t = "reboot",
      f = rebootFc }
 }
@@ -258,7 +292,7 @@ local function processMspReply(cmd,rx_buf)
       end
       return
    end
-   
+
    if cmd ~= page.read then
       return
    end
@@ -274,14 +308,14 @@ local function processMspReply(cmd,rx_buf)
       end
    end
 end
-   
+
 local function MaxLines()
    return #(SetupPages[currentPage].fields)
 end
 
 function cachePageElements(page)
    SetupPages[currentPage] = nil
-   return 
+   return
 end
 
 local function incPage(inc)
@@ -338,7 +372,7 @@ local function drawScreen(page,page_locked)
          lcd.drawText(f.x, f.y, f.t, f.to)
       end
    end
-   
+
    for i=1,#(page.fields) do
       local f = page.fields[i]
 
@@ -493,7 +527,7 @@ function run_bf_ui(event)
          end
       elseif event == EVT_EXIT_BREAK then
          SetupPages[currentPage] = nil
-         currentMenuState = menuStates["Crossfire"]         
+         currentMenuState = menuStates["Crossfire"]
       end
    -- editing value
    elseif gState == EDITING then
@@ -514,7 +548,7 @@ function run_bf_ui(event)
 
    local page = SetupPages[currentPage]
 
-   if not page.values then 
+   if not page.values then
       requestPage(page)
       page_locked = true
    end
@@ -526,7 +560,7 @@ function run_bf_ui(event)
    end
 
    drawScreen(page,page_locked)
-   
+
    -- do we have valid telemetry data?
    if getValue("TQly") == 0 then
       -- No!
