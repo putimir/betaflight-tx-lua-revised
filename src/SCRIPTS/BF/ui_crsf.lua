@@ -1,31 +1,10 @@
 -- load msp.lua
 assert(loadScript("/SCRIPTS/BF/msp_crsf.lua"))()
 
-screenPath = "/SCRIPTS/BF/X9/"
-
-SetupPages = {}
-
-PageFiles = {
-               "pids.lua",
-               "rates1.lua",
-               "rates2.lua",
-               "filters.lua",
-               "pwm.lua",
-               "vtx.lua"
-            }
-
-MenuBox = { x=40, y=12, w=120, x_offset=36, h_line=8, h_offset=3 }
-SaveBox = { x=40, y=12, w=120, x_offset=4,  h=30, h_offset=5 }
-NoTelem = { 70, 55, "No Telemetry", BLINK }
-
-local memUsed = 0
-
 local MSP_REBOOT = 68
 local MSP_EEPROM_WRITE = 250
-
 local REQ_TIMEOUT = 80 -- 800ms request timeout
 
---local PAGE_REFRESH = 1
 local PAGE_DISPLAY = 2
 local EDITING      = 3
 local PAGE_SAVING  = 4
@@ -40,178 +19,18 @@ local saveTimeout = 0
 local saveRetries = 0
 local saveMaxRetries = 0
 local pageRequested = false
-local debug = false
 
 backgroundFill = backgroundFill or ERASE
 foregroundColor = foregroundColor or SOLID
 globalTextOptions = globalTextOptions or 0
 
-function mergeUint16(lsb,msb)
-   return bit32.lshift(msb,8) + lsb
-end
-
-freqLookup = {
-    { 5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725 }, -- Boscam A
-    { 5733, 5752, 5771, 5790, 5809, 5828, 5847, 5866 }, -- Boscam B
-    { 5705, 5685, 5665, 5645, 5885, 5905, 5925, 5945 }, -- Boscam E
-    { 5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880 }, -- FatShark
-    { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917 }, -- RaceBand
-}
-
-function updateVTXFreq(page)
-   page.values["f"] = freqLookup[page.values[2]][page.values[3]]
-end
-
-function postReadVTX(page)
-   if page.values[1] == 3 then -- SmartAudio
-      page.fields[3].table = { 25, 200, 500, 800 }
-      page.fields[3].max = 4
-   elseif page.values[1] == 4 then -- Tramp
-      page.fields[3].table = { 25, 100, 200, 400, 600 }
-      page.fields[3].max = 5
-   else
-      -- TODO: print label on unavailable (0xFF) vs. unsupported (0)
-      --page.values = nil
-   end
-
-   if page.values and page.values[2] and page.values[3] then
-      if page.values[2] > 0 and page.values[3] > 0 then
-         updateVTXFreq(page)
-      else
-         page.values = nil
-      end
-   end
-
-end
-
-function getWriteValuesVTX(values)
-   local channel = (values[2]-1)*8 + values[3]-1
-   return { bit32.band(channel,0xFF), bit32.rshift(channel,8), values[4], values[5] }
-end
-
-function postReadRates(page)
-   if #(page.values) == 12 then
-      page.values[9] = mergeUint16(page.values[9], page.values[10])
-   end
-end
-
-function getWriteValuesRates(values)
-   return { values[1], values[2], values[3], values[4],
-            values[5], values[6], values[7], values[8],
-            bit32.band(values[9],0xFF), bit32.rshift(values[9],8), values[11], values[12] }
-end
-
-function postReadRatesAdv(page)
-   if #(page.values) == 23 then
-      page.values[20] = mergeUint16(page.values[20], page.values[21])
-      page.values[22] = mergeUint16(page.values[22], page.values[23])/1000
-   end
-end
-
-function getWriteValuesRatesAdv(values)
-   return { values[1], values[2], values[3], values[4],
-            values[5], values[6], values[7], values[8],
-            values[9], values[10], values[11], values[12],
-            values[13], values[14], values[15], values[16],
-            values[17], values[18], values[19], bit32.band(values[20],0xFF),
-            bit32.rshift(values[20],8), bit32.band(values[22]*1000,0xFF), bit32.rshift(values[22]*1000,8) }
-end
-
-function postReadFilters(page)
-   if #(page.values) == 18 then
-      page.values[2] = mergeUint16(page.values[2], page.values[3])
-      page.values[3] = mergeUint16(page.values[4], page.values[5])
-      page.values[4] = mergeUint16(page.values[6], page.values[7])
-      page.values[5] = mergeUint16(page.values[8], page.values[9])
-      page.values[6] = mergeUint16(page.values[14], page.values[15])
-      page.values[7] = mergeUint16(page.values[16], page.values[17])
-      page.values[8] = mergeUint16(page.values[10], page.values[11])
-      page.values[9] = mergeUint16(page.values[12], page.values[13])
-      page.values[10] = page.values[18]
-   end
-end
-
-function getWriteValuesFilters(values)
-   return { values[1],
-            bit32.band(values[2],0xFF), bit32.band(bit32.rshift(values[2],8),0xFF),
-            bit32.band(values[3],0xFF), bit32.band(bit32.rshift(values[3],8),0xFF),
-            bit32.band(values[4],0xFF), bit32.band(bit32.rshift(values[4],8),0xFF),
-            bit32.band(values[5],0xFF), bit32.band(bit32.rshift(values[5],8),0xFF),
-            bit32.band(values[8],0xFF), bit32.band(bit32.rshift(values[8],8),0xFF),
-            bit32.band(values[9],0xFF), bit32.band(bit32.rshift(values[9],8),0xFF),
-            bit32.band(values[6],0xFF), bit32.band(bit32.rshift(values[6],8),0xFF),
-            bit32.band(values[7],0xFF), bit32.band(bit32.rshift(values[7],8),0xFF),
-            values[10] }
-end
-
-function updateRateTables()
-   if SetupPages[currentPage].values[9] == 0 then
-      calculateGyroRates(SetupPages[currentPage], 8)
-      calculatePidRates(SetupPages[currentPage], 8)
-   elseif SetupPages[currentPage].values[9] == 1 then
-      calculateGyroRates(SetupPages[currentPage], 32)
-      calculatePidRates(SetupPages[currentPage], 32)
-   end
-end
-
-function updatePidRateTable()
-   local newRateIdx = SetupPages[currentPage].values[1]
-   local newRate = SetupPages[currentPage].gyroRates[newRateIdx]
-   calculatePidRates(SetupPages[currentPage], newRate)
-end
-
-function calculateGyroRates(page, baseRate)
-   page.gyroRates = {}
-   page.fields[2].table = {}
-   for i=1, 32 do
-      page.gyroRates[i] = baseRate/i
-      local fmt = nil
-      page.fields[2].table[i] = string.format("%.2f",baseRate/i)
-   end
-end
-
-function calculatePidRates(page, baseRate)
-   page.fields[3].table = {}
-   for i=1, 16 do
-      page.fields[3].table[i] = string.format("%.2f",baseRate/i)
-   end
-end
-
-function postReadAdvanced(page)
-   if #(page.values) == 10 then
-      page.values[5] = mergeUint16(page.values[5], page.values[6])
-      page.values[7] = mergeUint16(page.values[7], page.values[8])
-   end
-   local newRateIdx = page.values[1]
-   if page.values[9] == 0 then
-      calculateGyroRates(page, 8)
-   else
-      calculateGyroRates(page, 32)
-   end
-   local newRate = page.gyroRates[newRateIdx]
-   calculatePidRates(page, newRate)
-end
-
-function getWriteValuesAdvanced(values)
-   return { values[1], values[2], values[3], values[4],
-            bit32.band(values[5],0xFF), bit32.rshift(values[5],8),
-            bit32.band(values[7],0xFF), bit32.rshift(values[7],8),
-            values[9], values[10]}
-end
-
 local function saveSettings(new)
-   if debug then
-      local f = io.open(logFile, "a")
-      io.write(f,"Saving...\n")
-      io.close(f)
-   end
    local page = SetupPages[currentPage]
    if page.values then
-      if page.getWriteValues then
-         mspWritePackage(page.write, page.getWriteValues(page.values))
-      else
-         mspWritePackage(page.write, page.values)
+      if page.preSave then
+        page.preSave(page)
       end
+      mspWritePackage(page.write, page.values)
       saveTS = getTime()
       if gState == PAGE_SAVING then
          saveRetries = saveRetries + 1
@@ -225,29 +44,17 @@ local function saveSettings(new)
 end
 
 local function invalidatePages()
-   for i=1,#(SetupPages) do
-      local page = SetupPages[i]
-      page.values = nil
-   end
+   SetupPages = {}
    gState = PAGE_DISPLAY
    saveTS = 0
 end
 
 local function rebootFc()
-   if debug then
-      local f = io.open(logFile, "a")
-      io.write(f,"Rebooting...\n")
-      io.close(f)
-   end
    mspReadPackage(MSP_REBOOT)
+   invalidatePages()
 end
 
 local function eepromWrite()
-   if debug then
-      local f = io.open(logFile, "a")
-      io.write(f,"Writing...\n")
-      io.close(f)
-   end
    mspReadPackage(MSP_EEPROM_WRITE)
 end
 
@@ -274,7 +81,6 @@ local function processMspReply(cmd,rx_buf)
 
    local page = SetupPages[currentPage]
 
-   -- ignore replies to write requests for now
    if cmd == page.write then
       if page.eepromWrite then
          eepromWrite()
@@ -284,12 +90,12 @@ local function processMspReply(cmd,rx_buf)
    end
 
    if cmd == MSP_EEPROM_WRITE then
-      gState = PAGE_DISPLAY
-      page.values = nil
-      saveTS = 0
       if page.reboot then
          rebootFc()
       end
+      invalidatePages()
+      gState = PAGE_DISPLAY
+      saveTS = 0
       return
    end
 
@@ -302,10 +108,6 @@ local function processMspReply(cmd,rx_buf)
       for i=1,#(rx_buf) do
          page.values[i] = rx_buf[i]
       end
-
-      if page.postRead ~= nil then
-         page.postRead(page)
-      end
    end
 end
 
@@ -313,17 +115,12 @@ local function MaxLines()
    return #(SetupPages[currentPage].fields)
 end
 
-function cachePageElements(page)
-   SetupPages[currentPage] = nil
-   return
-end
-
 local function incPage(inc)
    currentPage = currentPage + inc
-   if currentPage > #(SetupPages) and currentPage > #(PageFiles) then
+   if currentPage > #(PageFiles) then
       currentPage = 1
    elseif currentPage < 1 then
-      currentPage = #(SetupPages)
+      currentPage = #(PageFiles)
    end
    currentLine = 1
 end
@@ -388,8 +185,6 @@ local function drawScreen(page,page_locked)
 
       if f.t ~= nil then
          lcd.drawText(f.x, f.y, f.t .. ":", globalTextOptions)
-
-         -- draw some value
          if f.sp ~= nil then
             spacing = f.sp
          end
@@ -397,15 +192,27 @@ local function drawScreen(page,page_locked)
          spacing = 0
       end
 
-      local idx = f.i or i
-      if page.values and page.values[idx] then
-         local val = page.values[idx]
-         if f.table and f.table[page.values[idx]] then
-            val = f.table[page.values[idx]]
-         end
-         lcd.drawText(f.x + spacing, f.y, val, text_options)
-      else
-         lcd.drawText(f.x + spacing, f.y, "---", text_options)
+      if page.values then
+        if (#(page.values) or 0) >= page.minBytes then
+          if not f.value and f.vals then
+            for idx=1, #(f.vals) do
+              f.value = bit32.bor((f.value or 0), bit32.lshift(page.values[f.vals[idx]], (idx-1)*8))
+            end
+            f.value = f.value/(f.scale or 1)
+          end
+        end
+      end
+      if f.value ~= nil then
+        if f.upd and page.values then
+          f.upd(page)
+        end
+        local val = f.value
+        if f.table and f.table[f.value] then
+          val = f.table[f.value]
+        end
+        lcd.drawText(f.x + spacing, f.y, val, text_options)
+      else 
+        lcd.drawText(f.x + spacing, f.y, "---", text_options)
       end
    end
 end
@@ -426,11 +233,17 @@ local function getCurrentField()
 end
 
 local function incValue(inc)
-   local page = SetupPages[currentPage]
-   local field = page.fields[currentLine]
-   local idx = field.i or currentLine
-   page.values[idx] = clipValue(page.values[idx] + inc, field.min or 0, field.max or 255)
-   if field.upd then field.upd(page) end
+    local page = SetupPages[currentPage]
+    local f = page.fields[currentLine]
+    local idx = f.i or currentLine
+    local scale = (f.scale or 1)
+    f.value = clipValue(f.value + ((inc*(f.mult or 1))/scale), (f.min/scale) or 0, (f.max/scale) or 255)
+    for idx=1, #(f.vals) do
+      page.values[f.vals[idx]] = bit32.rshift(f.value * scale, (idx-1)*8)
+    end
+    if f.upd and page.values then
+      f.upd(page) 
+    end
 end
 
 local function drawMenu()
@@ -545,7 +358,6 @@ function run_bf_ui(event)
    end
 
    local page_locked = false
-
    local page = SetupPages[currentPage]
 
    if not page.values then
