@@ -15,15 +15,15 @@ How to install:
 
 Bootloader Method
 1. Power off your Taranis X9D and power it back on in boot loader mode.
-2. Connect a USB cable and open the SDCard drive on your computer.
-3. Copy the sdcard/SCRIPTS directory to the root of your SD Card. 
+2. Connect a USB cable and open the SD card drive on your computer.
+3. Copy the contents of sdcard/SCRIPTS directory to the root of your SD Card. 
 4. Unplug the USB cable and power cycle your Taranis.
 
 Manual method
 1. Power off your Taranis X9D and remove the battery.
-2. Remove the SD Card and plug it into a computer
+2. Remove the SD card and plug it into a computer.
 3. Copy the contents of the sdcard/SCRIPTS directory to the root of the SD card.
-4. Reinsert your SD Card into the Taranis
+4. Reinsert your SD Card into the Taranis.
 5. Plug your battery back in and power up the Taranis.
 
 If you copied the files correctly, you can now go into the telemetry screen setup page and set up SPX9 as a telemetry screen.
