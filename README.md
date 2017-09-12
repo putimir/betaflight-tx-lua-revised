@@ -16,7 +16,7 @@ How to install:
 Bootloader Method
 1. Power off your Taranis X9D and power it back on in boot loader mode.
 2. Connect a USB cable and open the SDCard drive on your computer.
-3. Copy the sdcard/SCRIPTS directory to the root of your SD Card. 
+3. Copy the contents of the sdcard/SCRIPTS directory to the root of your SD Card. 
 4. Unplug the USB cable and power cycle your Taranis.
 
 Manual method
