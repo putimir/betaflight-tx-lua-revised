@@ -7,7 +7,7 @@ This branch is for the Crossfire (CRSF) version!  [Click here for the SmartPort 
 
 !! IMPORTANT: DON'T COPY THE ENTIRE CONTENTS OF THIS REPOSITORY ONTO YOUR SDCARD !!
 
-Navigate to the 'sdcard' directory and copy ONLY the SCRIPTS directory onto your Taranis.  If you do this correctly, the SCRIPTS directory will merge with your current SCRIPTS directory,  placing the scripts in their appropriate paths.  You will know if you did this correctly if the SPX9.lua file shows up in your /SCRIPTS/TELEMETRY directory.
+Navigate to the 'sdcard' directory and copy ONLY the SCRIPTS directory onto your Taranis.  If you do this correctly, the SCRIPTS directory will merge with your current SCRIPTS directory,  placing the scripts in their appropriate paths.  You will know if you did this correctly if the CFX9.lua file shows up in your /SCRIPTS/TELEMETRY directory.
 
 The src directory is not required for use and is only available for maintenance of the code.
 
