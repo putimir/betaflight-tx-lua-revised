@@ -5,7 +5,7 @@ return {
     eepromWrite    = false,
     reboot         = false,
     saveMaxRetries = 2,
-    saveTimeout    = 350, -- 3s
+    saveTimeout    = 300, -- 3s
     title          = "VTX", 
     minBytes       = 5,
     text = {},
