@@ -1,8 +1,6 @@
 # betaflight-tx-lua-revised
 Various enhancements to the typical betaflight-tx-lua-scripts design.  Borrowed some existing code, but added more features and improved memory management.  Currently only implemented for the X9 series transmitters.
 
-### This script will only work on Betaflight 3.2.0-rc5 and greater!  Make sure to download and flash it before continuing!
-
 ***This code is currently in core development, so expect there to be occasional issues that need resolution.  If you encounter any problems, please open an issue and clearly describe the problem and any steps taken so that it can be reproduced.***
 
 This branch is for the SmartPort version!  [Click here for the Crossfire (CRSF) Branch.](https://github.com/codecae/betaflight-tx-lua-revised/tree/crsf)
