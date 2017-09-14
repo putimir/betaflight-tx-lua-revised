@@ -125,7 +125,7 @@ local function run(event)
               break
             else
               crossfireTelemetryPush(0x28, { devices[i].id, 0xEA })
-              return "device.lua"
+              return "/SCRIPTS/BF/dev.lua"
             end
         end
         lcd.drawText(0, i*8+9, devices[i].name, attr)

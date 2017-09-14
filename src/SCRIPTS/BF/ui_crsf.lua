@@ -108,6 +108,9 @@ local function processMspReply(cmd,rx_buf)
       for i=1,#(rx_buf) do
          page.values[i] = rx_buf[i]
       end
+      if page.postLoad then
+        page.postLoad(page)
+      end
    end
 end
 
@@ -157,64 +160,69 @@ end
 
 local function drawScreen(page,page_locked)
 
-   local screen_title = page.title
+  local screen_title = page.title
 
-   drawScreenTitle("Betaflight / "..screen_title)
+  drawScreenTitle("Betaflight / "..screen_title)
 
-   for i=1,#(page.text) do
-      local f = page.text[i]
-      if f.to == nil then
-         lcd.drawText(f.x, f.y, f.t, globalTextOptions)
-      else
-         lcd.drawText(f.x, f.y, f.t, f.to)
+  for i=1,#(page.text) do
+    local f = page.text[i]
+    if f.to == nil then
+      lcd.drawText(f.x, f.y, f.t, globalTextOptions)
+    else
+      lcd.drawText(f.x, f.y, f.t, f.to)
+    end
+  end
+
+  local val = "---"
+
+  for i=1,#(page.fields) do
+    local f = page.fields[i]
+
+    local text_options = globalTextOptions
+    if i == currentLine then
+      text_options = INVERS
+      if gState == EDITING then
+        text_options = text_options + BLINK
       end
-   end
+    end
 
-   for i=1,#(page.fields) do
-      local f = page.fields[i]
+    local spacing = 20
 
-      local text_options = globalTextOptions
-      if i == currentLine then
-         text_options = INVERS
-         if gState == EDITING then
-            text_options = text_options + BLINK
-         end
-      end
+    if f.t ~= nil then
+      lcd.drawText(f.x, f.y, f.t .. ":", globalTextOptions)
+      if f.sp ~= nil then
+        spacing = f.sp
+        end
+    else
+      spacing = 0
+    end
 
-      local spacing = 20
-
-      if f.t ~= nil then
-         lcd.drawText(f.x, f.y, f.t .. ":", globalTextOptions)
-         if f.sp ~= nil then
-            spacing = f.sp
-         end
-      else
-         spacing = 0
-      end
-
-      if page.values then
-        if (#(page.values) or 0) >= page.minBytes then
-          if not f.value and f.vals then
-            for idx=1, #(f.vals) do
-              f.value = bit32.bor((f.value or 0), bit32.lshift(page.values[f.vals[idx]], (idx-1)*8))
-            end
-            f.value = f.value/(f.scale or 1)
+    if page.values then
+      if (#(page.values) or 0) >= page.minBytes then
+        if not f.value and f.vals then
+          for idx=1, #(f.vals) do
+            f.value = bit32.bor((f.value or 0), bit32.lshift(page.values[f.vals[idx]], (idx-1)*8))
           end
+          f.value = f.value/(f.scale or 1)
         end
       end
-      if f.value ~= nil then
-        if f.upd and page.values then
-          f.upd(page)
-        end
-        local val = f.value
-        if f.table and f.table[f.value] then
-          val = f.table[f.value]
-        end
-        lcd.drawText(f.x + spacing, f.y, val, text_options)
-      else 
-        lcd.drawText(f.x + spacing, f.y, "---", text_options)
+    end
+   
+    val = "---"
+   
+    if f.value then
+      if f.upd and page.values then
+        f.upd(page)
       end
-   end
+      val = f.value
+      if f.table and f.table[f.value] then
+        val = f.table[f.value]
+      end
+    end
+
+    lcd.drawText(f.x + spacing, f.y, val, text_options)
+  
+  end
 end
 
 local function clipValue(val,min,max)

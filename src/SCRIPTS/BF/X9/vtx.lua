@@ -24,6 +24,11 @@ return {
         { 5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880 }, -- FatShark
         { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917 }, -- RaceBand
     },
+    postLoad = function (self)
+        if self.values[2] ==0 or self.values[3] == 0 or self.values[4] == 0 then
+            self.values = {}
+        end
+    end,
     preSave = function(self) 
         local valsTemp = {}
         local channel = (self.values[2]-1)*8 + self.values[3]-1
@@ -46,8 +51,8 @@ return {
         end
     end,
     updateVTXFreq = function(self)
-        if self.values then
-            if self.values[2] > 0 and self.values[3] > 0 then
+        if (#(self.values) or 0) >= self.minBytes then
+            if (self.fields[2].value or 0) > 0 and (self.fields[3].value or 0) > 0 then
                 self.fields[6].value = self.freqLookup[self.values[2]][self.values[3]]
             end
         end
