@@ -1,12 +1,14 @@
 screenPath = "/SCRIPTS/BF/X9/"
 
-SetupPages = {
-   { screen = "pids.lua" },
-   { screen = "rates1.lua" },
-   { screen = "rates2.lua" },
-   { screen = "filters.lua" },
-   { screen = "pwm.lua" },
-   { screen = "vtx.lua" }
+SetupPages = {}
+
+PageFiles = {
+    "pids.lua",
+    "rates1.lua",
+    "rates2.lua",
+    "filters.lua",
+    "pwm.lua",
+    "vtx.lua"
 }
 
 MenuBox = { x=40, y=12, w=120, x_offset=36, h_line=8, h_offset=3 }

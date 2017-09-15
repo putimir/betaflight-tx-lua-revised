@@ -1,10 +1,6 @@
---
--- MSP/SPORT code
---
 
 -- Protocol version
 SPORT_MSP_VERSION = bit32.lshift(1,5)
-
 SPORT_MSP_STARTFLAG = bit32.lshift(1,4)
 
 -- Sensor ID used by the local LUA script
@@ -15,6 +11,9 @@ REMOTE_SENSOR_ID = 0x1B
 
 REQUEST_FRAME_ID = 0x30
 REPLY_FRAME_ID   = 0x32
+
+
+
 
 -- Sequence number for next MSP/SPORT packet
 local sportMspSeq = 0
@@ -119,6 +118,15 @@ function mspProcessTxQ()
    mspSendSport(payload)
    return true
 end
+
+function mspReadPackage(cmd)
+   return mspSendRequest(cmd, {})
+end
+
+function mspWritePackage(cmd, payload)
+   return mspSendRequest(cmd, payload)
+end
+
 
 function mspSendRequest(cmd,payload)
 

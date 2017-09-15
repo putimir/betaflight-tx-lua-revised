@@ -4,8 +4,7 @@ return {
    title          = "Rates (1/2)",
    reboot         = false,
    eepromWrite    = true,
-   postRead       = postReadRates,
-   getWriteValues = getWriteValuesRates,
+   minBytes       = 12,
    text = {
       { t = "RC",       x = 43,  y = 11, to = SMLSIZE },
       { t = "Rate",     x = 38,  y = 18, to = SMLSIZE },
@@ -24,21 +23,16 @@ return {
       { t = "YAW",      x = 8,   y = 46, to = SMLSIZE },
    },
    fields = {
-      -- RC Rate
-      { x = 39,   y = 31,  i = 1 }, 
-      { x = 39,   y = 46,  i = 12 },
-      -- Super Rate
-      { x = 71,   y = 26,  i = 3 },
-      { x = 71,   y = 36,  i = 4 },
-      { x = 71,   y = 46,  i = 5 },
-      -- RC Expo
-      { x = 99,   y = 31,  i = 2 },
-      { x = 99,   y = 46,  i = 11 },
-      -- Throttle Expo
-      { x = 144,  y = 31,  i = 7 },
-      { x = 144,  y = 46,  i = 8 },  
-      -- TPA
-      { x = 186,  y = 31,  i = 6, min = 0, max = 100 },
-      { x = 186,  y = 46,  i = 9, min = 1000, max = 2000 },                  
+      { x = 39,   y = 31,  vals = { 1 },  min = 0, max = 255, scale = 100 }, 
+      { x = 39,   y = 46,  vals = { 12 }, min = 0, max = 255, scale = 100 },
+      { x = 66,   y = 26,  vals = { 3 },  min = 0, max = 100, scale = 100 },
+      { x = 66,   y = 36,  vals = { 4 },  min = 0, max = 100, scale = 100 },
+      { x = 66,   y = 46,  vals = { 5 },  min = 0, max = 255, scale = 100 },
+      { x = 94,   y = 31,  vals = { 2 },  min = 0, max = 100, scale = 100 },
+      { x = 94,   y = 46,  vals = { 11 }, min = 0, max = 100, scale = 100 },
+      { x = 144,  y = 31,  vals = { 7 },  min = 0, max = 100, scale = 100 },
+      { x = 144,  y = 46,  vals = { 8 },  min = 0, max = 100, scale = 100 },  
+      { x = 186,  y = 31,  vals = { 6 } , min = 0, max = 100, scale = 100 },
+      { x = 186,  y = 46,  vals = { 9, 10 }, min = 1000, max = 2000 },                  
    },
 }
