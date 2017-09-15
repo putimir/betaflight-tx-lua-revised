@@ -26,7 +26,6 @@ local mspRxIdx = 1
 local mspRxCRC = 0
 local mspStarted = false
 local mspLastReq = 0
-local debug = false
 
 -- Stats
 mspRequestsSent    = 0
@@ -60,22 +59,6 @@ local function mspSendCrossfire(payload)
 
    for i=1, #(payload) do
       payloadOut[i+2] = payload[i]
-   end
-
-   if debug then
-      local f = io.open(logFile,"a")
-      local out = string.format("TX:0x%0X,", crsfMspCmd)
-      if f then
-         for i=1, #(payloadOut) do
-            out = out .. string.format("0x%0X",payloadOut[i])
-            if i < #(payloadOut) then
-               out = out .. ","
-            end
-         end
-      end
-      out = out .. "\n"
-      io.write(f, out)
-      io.close(f)
    end
 
    crossfireTelemetryPush(crsfMspCmd, payloadOut)
@@ -235,21 +218,6 @@ end
 function mspPollReply()
    while true do
       local command, data = crossfireTelemetryPop()
-      if debug and command then
-         local f = io.open(logFile,"a")
-         local out = string.format("RX:0x%0X,", command)
-         if f then
-            for i=1, #(data) do
-               out = out .. string.format("0x%0X",data[i])
-               if i < #(data) then
-                  out = out .. ","
-               end
-            end
-         end
-         out = out .. "\n"
-         io.write(f, out)
-         io.close(f)
-      end
       if command == CRSF_FRAMETYPE_MSP_RESP then
          if data[1] == CRSF_ADDRESS_RADIO_TRANSMITTER and data[2] == CRSF_ADDRESS_BETAFLIGHT then
 

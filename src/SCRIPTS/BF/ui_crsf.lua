@@ -1,4 +1,3 @@
--- load msp.lua
 assert(loadScript("/SCRIPTS/BF/msp_crsf.lua"))()
 
 local MSP_REBOOT = 68
@@ -11,6 +10,8 @@ local PAGE_SAVING  = 4
 local MENU_DISP    = 5
 
 local gState = PAGE_DISPLAY
+
+SetupPages = {}
 
 local currentPage = 1
 local currentLine = 1
@@ -25,22 +26,22 @@ foregroundColor = foregroundColor or SOLID
 globalTextOptions = globalTextOptions or 0
 
 local function saveSettings(new)
-   local page = SetupPages[currentPage]
-   if page.values then
-      if page.preSave then
-        page.preSave(page)
-      end
-      mspWritePackage(page.write, page.values)
-      saveTS = getTime()
-      if gState == PAGE_SAVING then
-         saveRetries = saveRetries + 1
-      else
-         gState = PAGE_SAVING
-         saveRetries = 0
-         saveMaxRetries = page.saveMaxRetries or 2 -- default 2
-         saveTimeout = page.saveTimeout or 150     -- default 1.5s
-      end
-   end
+  local page = SetupPages[currentPage]
+  if page.values then
+    if page.preSave then
+      page.preSave(page)
+    end
+    mspWritePackage(page.write, page.values)
+    saveTS = getTime()
+    if gState == PAGE_SAVING then
+      saveRetries = saveRetries + 1
+    else
+      gState = PAGE_SAVING
+      saveRetries = 0
+      saveMaxRetries = page.saveMaxRetries or 2 -- default 2
+      saveTimeout = page.saveTimeout or 150     -- default 1.5s
+    end
+  end
 end
 
 local function invalidatePages()
@@ -347,8 +348,7 @@ function run_bf_ui(event)
             gState = EDITING
          end
       elseif event == EVT_EXIT_BREAK then
-         SetupPages[currentPage] = nil
-         currentMenuState = menuStates["Crossfire"]
+        return "/CROSSFIRE/crossfire.lua"
       end
    -- editing value
    elseif gState == EDITING then
@@ -400,4 +400,4 @@ function run_bf_ui(event)
    return 0
 end
 
---return { run=run_ui }
+return run_bf_ui
