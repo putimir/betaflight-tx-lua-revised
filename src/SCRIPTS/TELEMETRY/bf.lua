@@ -24,20 +24,26 @@ supportedProtocols =
     {
         transport       = SCRIPT_HOME.."/MSP/sp.lua",
         rssi            = function() return getValue("RSSI") end,
-        exitFunc        = function() return 0 end
+        exitFunc        = function() return 0 end,
+        push            = sportTelemetryPush,
+        maxTxBufferSize = 8,
+        maxRxBufferSize = 8
     },
     crsf =
     {
         transport       = SCRIPT_HOME.."/MSP/crsf.lua",
         rssi            = function() return getValue("TQly") end,
-        exitFunc        = function() return "/CROSSFIRE/crossfire.lua" end
+        exitFunc        = function() return "/CROSSFIRE/crossfire.lua" end,
+        push            = crossfireTelemetryPush,
+        maxTxBufferSize = 8,
+        maxRxBufferSize = 58
     }
 }
 
 function getProtocol()
-    if sportTelemetryPush() then
+    if supportedProtocols.smartPort.push() then
         return supportedProtocols.smartPort
-    elseif crossfireTelemetryPush() then
+    elseif supportedProtocols.crsf.push() then
         return supportedProtocols.crsf
     end
 end
@@ -54,6 +60,8 @@ end
 
 assert(loadScript(radio.preLoad))()
 assert(loadScript(protocol.transport))()
+assert(loadScript(SCRIPT_HOME.."/MSP/common.lua"))()
+
 local run = assert(loadScript(SCRIPT_HOME.."/ui.lua"))()
 
 return { run=run }
