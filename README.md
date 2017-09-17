@@ -6,7 +6,7 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc1 is now availa
 
 ### Changes in v1.0-rc1
 * Code has been heavily dried out, enabling ease of maintenance and more rapid enhancements.
-* Template logic has been decoupled from the UI layer and has been built into the screen template files.
+* Event-based template logic has been decoupled from the UI layer and has been built into the screen template files.
 * Transport layer is now based primarily on a common codebase.  Protocol specific configurations have been decoupled.
 * The script adapts transparently between the CRSF and SmartPort protocols.  The same bf.lua script can be used as a telemetry page on both CRSF or SmartPort models.
 * The standard Crossfire lua script seamlessly invokes the telemetry script, giving a one-stop-shop for Crossfire configuration.
