@@ -32,7 +32,7 @@ Bootloader Method
 3. Copy the contents of sdcard directory to the root of your SD card. 
 4. Unplug the USB cable and power cycle your transmitter.
 
-Manual method (varies, based on the model of your transmitter
+Manual method (varies, based on the model of your transmitter)
 1. Power off your transmitter.
 2. Remove the SD card and plug it into a computer
 3. Copy the contents of the sdcard directory to the root of the SD card.
