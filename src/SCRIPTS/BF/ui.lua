@@ -1,5 +1,3 @@
--- load msp.lua
-assert(loadScript("/SCRIPTS/BF/msp_sp.lua"))()
 
 local MSP_REBOOT = 68
 local MSP_EEPROM_WRITE = 250
@@ -346,9 +344,8 @@ function run_ui(event)
          if page.values and page.values[idx] and (field.ro ~= true) then
             gState = EDITING
          end
-      -- elseif event == EVT_EXIT_BREAK then
-      --    SetupPages[currentPage] = nil
-      --    return 1
+      elseif event == EVT_EXIT_BREAK then
+        return protocol.exitFunc();
       end
    -- editing value
    elseif gState == EDITING then
@@ -362,7 +359,7 @@ function run_ui(event)
    end
 
    if SetupPages[currentPage] == nil then
-      SetupPages[currentPage] = assert(loadScript(screenPath .. PageFiles[currentPage]))()
+      SetupPages[currentPage] = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
    end
 
    local page_locked = false
@@ -373,7 +370,6 @@ function run_ui(event)
       page_locked = true
    end
 
-   -- draw screen
    lcd.clear()
    if TEXT_BGCOLOR then
       lcd.drawFilledRectangle(0, 0, LCD_W, LCD_H, TEXT_BGCOLOR)
@@ -381,11 +377,8 @@ function run_ui(event)
 
    drawScreen(page,page_locked)
 
-   -- do we have valid telemetry data?
-   if getValue("RSSI") == 0 then
-      -- No!
+   if protocol.rssi() == 0 then
       lcd.drawText(NoTelem[1],NoTelem[2],NoTelem[3],NoTelem[4])
-      --invalidatePages()
    end
 
    if gState == MENU_DISP then

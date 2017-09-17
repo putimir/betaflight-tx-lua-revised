@@ -86,7 +86,7 @@ local function run(event)
       local attr = (lineIndex == i and INVERS or 0)
       if event == EVT_ENTER_BREAK and attr == INVERS then 
             if devices[i].id == 0xC8 then
-              return "/SCRIPTS/TELEMETRY/CFX9.lua"
+              return "/SCRIPTS/TELEMETRY/bf.lua"
             else
               crossfireTelemetryPush(0x28, { devices[i].id, 0xEA })
               return "device.lua"

@@ -1,26 +1,21 @@
 
 -- Protocol version
-MSP_VERSION = bit32.lshift(1,5)
-MSP_STARTFLAG = bit32.lshift(1,4)
+SPORT_MSP_VERSION = bit32.lshift(1,5)
+SPORT_MSP_STARTFLAG = bit32.lshift(1,4)
 
--- CRSF Devices
-CRSF_ADDRESS_BETAFLIGHT          = 0xC8
-CRSF_ADDRESS_RADIO_TRANSMITTER   = 0xEA
+-- Sensor ID used by the local LUA script
+LOCAL_SENSOR_ID  = 0x0D
 
--- CRSF Frame Types
-CRSF_FRAMETYPE_MSP_REQ           = 0x7A      -- response request using msp sequence as command
-CRSF_FRAMETYPE_MSP_RESP          = 0x7B      -- reply with 60 byte chunked binary
-CRSF_FRAMETYPE_MSP_WRITE         = 0x7C      -- write with 60 byte chunked binary 
+-- Sensor ID used by the MSP server (BF, CF, MW, etc...)
+REMOTE_SENSOR_ID = 0x1B
 
-MSP_TX_PAYLOAD_SIZE                = 8 -- limited to 16 by opentx 
-MSP_RX_PAYLOAD_SIZE                = 58 -- fifo supports up to 256
+REQUEST_FRAME_ID = 0x30
+REPLY_FRAME_ID   = 0x32
 
--- Sequence number for next MSP packet
-local mspSeq = 0
-local mspRemoteSeq = 0
+-- Sequence number for next MSP/SPORT packet
+local sportMspSeq = 0
+local sportMspRemoteSeq = 0
 
-local crsfMspCmd = 0
-local crsfMspHeader = {}
 local mspRxBuf = {}
 local mspRxIdx = 1
 local mspRxCRC = 0
@@ -53,17 +48,19 @@ local mspTxCRC = 0
 
 local mspTxPk = 0
 
-local function mspSendCrossfire(payload)
+local function mspSendSport(payload)
 
-   local payloadOut = { CRSF_ADDRESS_BETAFLIGHT, CRSF_ADDRESS_RADIO_TRANSMITTER }
+   local dataId = 0
+   dataId = payload[1] + bit32.lshift(payload[2],8)
 
-   for i=1, #(payload) do
-      payloadOut[i+2] = payload[i]
+   local value = 0
+   value = payload[3] + bit32.lshift(payload[4],8)
+      + bit32.lshift(payload[5],16) + bit32.lshift(payload[6],24)
+
+   local ret = sportTelemetryPush(LOCAL_SENSOR_ID, REQUEST_FRAME_ID, dataId, value)
+   if ret then
+      mspTxPk = mspTxPk + 1
    end
-
-   crossfireTelemetryPush(crsfMspCmd, payloadOut)
-   mspTxPk = mspTxPk + 1
-
 end
 
 function mspProcessTxQ()
@@ -72,21 +69,21 @@ function mspProcessTxQ()
       return false
    end
 
-   if not crossfireTelemetryPush() then
+   if not sportTelemetryPush() then
       return true
    end
 
    local payload = {}
-   payload[1] = mspSeq + MSP_VERSION
-   mspSeq = bit32.band(mspSeq + 1, 0x0F)
+   payload[1] = sportMspSeq + SPORT_MSP_VERSION
+   sportMspSeq = bit32.band(sportMspSeq + 1, 0x0F)
 
    if mspTxIdx == 1 then
       -- start flag
-      payload[1] = payload[1] + MSP_STARTFLAG
+      payload[1] = payload[1] + SPORT_MSP_STARTFLAG
    end
 
    local i = 2
-   while (i <= MSP_TX_PAYLOAD_SIZE) do
+   while (i <= 6) do
       if mspTxIdx > #(mspTxBuf) then
          break
       end
@@ -96,17 +93,16 @@ function mspProcessTxQ()
       i = i + 1
    end
 
-   if i <= MSP_TX_PAYLOAD_SIZE then
+   if i <= 6 then
       payload[i] = mspTxCRC
       i = i + 1
 
-      -- zero fill
-      while i <= MSP_TX_PAYLOAD_SIZE do
+      while i <= 6 do
          payload[i] = 0
          i = i + 1
       end
 
-      mspSendCrossfire(payload)
+      mspSendSport(payload)
       
       mspTxBuf = {}
       mspTxIdx = 1
@@ -115,24 +111,23 @@ function mspProcessTxQ()
       return false
    end
       
-   mspSendCrossfire(payload)
+   mspSendSport(payload)
    return true
 end
 
 function mspReadPackage(cmd)
-   crsfMspCmd = CRSF_FRAMETYPE_MSP_REQ
    return mspSendRequest(cmd, {})
 end
 
 function mspWritePackage(cmd, payload)
-   crsfMspCmd = CRSF_FRAMETYPE_MSP_WRITE
    return mspSendRequest(cmd, payload)
 end
 
-function mspSendRequest(cmd, payload)
+
+function mspSendRequest(cmd,payload)
 
    -- busy
-   if #(mspTxBuf) ~= 0 or not cmd then
+   if #(mspTxBuf) ~= 0 then
       return nil
    end
 
@@ -163,6 +158,10 @@ local function mspReceivedReply(payload)
 
       mspErrorPk = mspErrorPk + 1
 
+      -- return error
+      -- CRC checking missing
+
+      --return payload[idx]
       return nil
    end
    
@@ -185,21 +184,21 @@ local function mspReceivedReply(payload)
       mspOutOfOrder = mspOutOfOrder + 1
       return nil
 
-   elseif bit32.band(mspRemoteSeq + 1, 0x0F) ~= seq then
+   elseif bit32.band(sportMspRemoteSeq + 1, 0x0F) ~= seq then
       mspOutOfOrder = mspOutOfOrder + 1
       mspStarted = false
       return nil
    end
 
-   while (idx <= MSP_RX_PAYLOAD_SIZE) and (mspRxIdx <= mspRxSize) do
+   while (idx <= 6) and (mspRxIdx <= mspRxSize) do
       mspRxBuf[mspRxIdx] = payload[idx]
       mspRxCRC = bit32.bxor(mspRxCRC,payload[idx])
       mspRxIdx = mspRxIdx + 1
       idx = idx + 1
    end
 
-   if idx > MSP_RX_PAYLOAD_SIZE then
-      mspRemoteSeq = seq
+   if idx > 6 then
+      sportMspRemoteSeq = seq
       return true
    end
 
@@ -217,21 +216,25 @@ end
 
 function mspPollReply()
    while true do
-      local command, data = crossfireTelemetryPop()
-      if command == CRSF_FRAMETYPE_MSP_RESP then
-         if data[1] == CRSF_ADDRESS_RADIO_TRANSMITTER and data[2] == CRSF_ADDRESS_BETAFLIGHT then
+      local sensorId, frameId, dataId, value = sportTelemetryPop()
+      if sensorId == REMOTE_SENSOR_ID and frameId == REPLY_FRAME_ID then
 
-            local mspData = {}
+         local payload = {}
+         payload[1] = bit32.band(dataId,0xFF)
+         dataId = bit32.rshift(dataId,8)
+         payload[2] = bit32.band(dataId,0xFF)
 
-            for i=3, #(data) do
-                mspData[i-2] = data[i]
-            end
+         payload[3] = bit32.band(value,0xFF)
+         value = bit32.rshift(value,8)
+         payload[4] = bit32.band(value,0xFF)
+         value = bit32.rshift(value,8)
+         payload[5] = bit32.band(value,0xFF)
+         value = bit32.rshift(value,8)
+         payload[6] = bit32.band(value,0xFF)
 
-            local ret = mspReceivedReply(mspData)
-
-            if type(ret) == "table" then
-               return mspLastReq,ret
-            end
+         local ret = mspReceivedReply(payload)
+         if type(ret) == "table" then
+            return mspLastReq,ret
          end
       else
          break
