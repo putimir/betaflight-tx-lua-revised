@@ -27,20 +27,31 @@ The src directory is not required for use and is only available for maintenance 
 How to install:
 
 Bootloader Method
-1. Power off your Taranis X9D and power it back on in boot loader mode.
-2. Connect a USB cable and open the SDCard drive on your computer.
-3. Copy the contents of sdcard directory to the root of your SD Card. 
-4. Unplug the USB cable and power cycle your Taranis.
+1. Power off your transmitter and power it back on in boot loader mode.
+2. Connect a USB cable and open the SD card drive on your computer.
+3. Copy the contents of sdcard directory to the root of your SD card. 
+4. Unplug the USB cable and power cycle your transmitter.
 
-Manual method
-1. Power off your Taranis X9D and remove the battery.
-2. Remove the SD Card and plug it into a computer
+Manual method (varies, based on the model of your transmitter
+1. Power off your transmitter.
+2. Remove the SD card and plug it into a computer
 3. Copy the contents of the sdcard directory to the root of the SD card.
-4. Reinsert your SD Card into the Taranis
-5. Plug your battery back in and power up the Taranis.
+4. Reinsert your SD card into the transmitter
+5. Power up your transmitter.
 
 If you copied the files correctly, you can now go into the telemetry screen setup page and set up SPX9 as a telemetry screen.
 
+## Adding the script as a Telemetry page
+Setting up the script as a telemetry page will enable access at the press of a button. (For now, this only applies to the Taranis X9D series).
+1. Hit the [MENU] button and select the model for which you would like to enable the script.
+2. While on the [MODEL SELECTION] screen, long-press the [PAGE] button to navigate to the [DISPLAY] page. 
+3. Use the [-] button to move the cursor down to [Screen 1] and hit [ENTER].
+4. Use the [+] or [-] buttons to select the [Script] option and press [ENTER].
+5. Press [-] to move the cursor to the script selection field and hit [ENTER].
+6. Select 'bf' and hit [ENTER].
+7. Long-press [EXIT] to return to your model screen.
+
+To invoke the script, simply long-press the [PAGE] button from the model screen.
 
 ## Seeking Contributors 
 
