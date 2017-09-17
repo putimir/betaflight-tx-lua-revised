@@ -39,7 +39,7 @@ Manual method (varies, based on the model of your transmitter)
 4. Reinsert your SD card into the transmitter
 5. Power up your transmitter.
 
-If you copied the files correctly, you can now go into the telemetry screen setup page and set up SPX9 as a telemetry screen.
+If you copied the files correctly, you can now go into the telemetry screen setup page and set up the script as telemetry page.
 
 ## Adding the script as a Telemetry page
 Setting up the script as a telemetry page will enable access at the press of a button. (For now, this only applies to the Taranis X9D series).
