@@ -20,7 +20,7 @@ If you are coming from a previous version, it's recommended to remove all files 
 
 !! IMPORTANT: DON'T COPY THE ENTIRE CONTENTS OF THIS REPOSITORY ONTO YOUR SDCARD !!
 
-Navigate to the 'sdcard' directory and copy it's contents onto your Taranis.  If you do this correctly, the SCRIPTS directory will merge with your current SCRIPTS directory,  placing the scripts in their appropriate paths.  You will know if you did this correctly if the bf.lua file shows up in your /SCRIPTS/TELEMETRY directory.
+Navigate to the 'sdcard' directory and copy its contents onto your Taranis.  If you do this correctly, the SCRIPTS and CROSSFIRE directories will merge with your existing directories, placing the scripts in their appropriate paths.  You will know if you did this correctly if the bf.lua file shows up in your /SCRIPTS/TELEMETRY directory.
 
 The src directory is not required for use and is only available for maintenance of the code.
 
