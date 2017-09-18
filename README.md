@@ -1,7 +1,7 @@
 # betaflight-tx-lua-revised
 Various enhancements to the typical betaflight-tx-lua-scripts design.  Borrowed some existing code, but added more features and improved memory management.  Currently only implemented for the X9 series transmitters.
 
-## v1.0-rc1 Released!
+## v1.0-rc2 Released!
 The scripts have hit a fairly significant milestone.  The v1.0-rc1 is now available for download and testing.  Until a stable release can be completed, this code is currently in core development, so expect there to be occasional issues that need resolution.  If you encounter any problems, please open an issue and clearly describe the problem and any steps taken so that it can be reproduced.
 
 ### Changes in v1.0-rc1
@@ -11,8 +11,10 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc1 is now availa
 * The script adapts transparently between the CRSF and SmartPort protocols.  The same bf.lua script can be used as a telemetry page on both CRSF or SmartPort models.
 * The standard Crossfire lua script seamlessly invokes the telemetry script, giving a one-stop-shop for Crossfire configuration.
 * Creating templates for new transmitters is now easier than ever.  There is never a need to touch the common code when creating new or adjusting existing templates.  If you are interested in building screen templates for the X7 or Horus transmitters, feel free to reach out.
+### Changes in v1.0-rc2
+* Corrected FrSky Buffer Sizes
 
-### Installing v1.0-rc1
+### Installing
 
 If you are coming from a previous version, it's recommended to remove all files from previous installations.  Simply delete the entire /SCRIPTS/BF directory and delete CFX9.lua and/or SPX9.lua from your /SCRIPTS/TELEMETRY directory.
 
