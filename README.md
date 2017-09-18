@@ -2,7 +2,7 @@
 Various enhancements to the typical betaflight-tx-lua-scripts design.  Borrowed some existing code, but added more features and improved memory management.  Currently only implemented for the X9 series transmitters.
 
 ## v1.0-rc2 Released!
-The scripts have hit a fairly significant milestone.  The v1.0-rc1 is now available for download and testing.  Until a stable release can be completed, this code is currently in core development, so expect there to be occasional issues that need resolution.  If you encounter any problems, please open an issue and clearly describe the problem and any steps taken so that it can be reproduced.
+The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now available for download and testing.  Until a stable release can be completed, this code is currently in core development, so expect there to be occasional issues that need resolution.  If you encounter any problems, please open an issue and clearly describe the problem and any steps taken so that it can be reproduced.
 
 ### Changes in v1.0-rc1
 * Code has been heavily dried out, enabling ease of maintenance and more rapid enhancements.
