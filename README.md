@@ -14,7 +14,7 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now availa
 ### Changes in v1.0-rc2
 * Corrected FrSky Buffer Sizes
 
-### Installing
+## Installing
 
 If you are coming from a previous version, it's recommended to remove all files from previous installations.  Simply delete the entire /SCRIPTS/BF directory and delete CFX9.lua and/or SPX9.lua from your /SCRIPTS/TELEMETRY directory.
 
@@ -43,17 +43,28 @@ Manual method (varies, based on the model of your transmitter)
 
 If you copied the files correctly, you can now go into the telemetry screen setup page and set up the script as telemetry page.
 
-## Adding the script as a Telemetry page
+## Adding the script as a telemetry page
 Setting up the script as a telemetry page will enable access at the press of a button. (For now, this only applies to the Taranis X9D series).
 1. Hit the [MENU] button and select the model for which you would like to enable the script.
 2. While on the [MODEL SELECTION] screen, long-press the [PAGE] button to navigate to the [DISPLAY] page. 
-3. Use the [-] button to move the cursor down to [Screen 1] and hit [ENTER].
-4. Use the [+] or [-] buttons to select the [Script] option and press [ENTER].
-5. Press [-] to move the cursor to the script selection field and hit [ENTER].
+3. Use the [-] button to move the cursor down to [Screen 1] and hit [ENT].
+4. Use the [+] or [-] buttons to select the [Script] option and press [ENT].
+5. Press [-] to move the cursor to the script selection field and hit [ENT].
 6. Select 'bf' and hit [ENTER].
 7. Long-press [EXIT] to return to your model screen.
 
 To invoke the script, simply long-press the [PAGE] button from the model screen.
+
+## Invoking from the OpenTX Crossfire configuration script
+This package contains a slight modification to the standard OpenTx crossfire.lua script that will load the configuration pages while configuring your Crossfire devices.
+1. From your model screen, long-press [MENU] to reveal the [RADIO SETUP] screen.
+2. Press the [PAGE] button to open the [SD CARD] browser.
+3. Navigate to the [CROSSFIRE] directory using [-] or [+] and press [ENT].
+4. Navigate to the 'crossfire.lua' file, long-press [ENT], and select [Execute] by pressing [ENT].
+
+If your flight controller is running the proper firmware, you will see 'Betaflight X.X.X: ABCD' in the list of Crossfire devices, where X.X.X is the Betaflight version (3.2.0 or greater) and ABCD is the board identifier (ie. BFF3 for Betaflight F3).
+
+Select this device by pressing [-] or [+], press [ENT] and the configuration pages will load.  To exit back to the device list, hit the [EXIT] button at any time.
 
 ## Seeking Contributors 
 
