@@ -181,9 +181,9 @@ local function drawScreen(page,page_locked)
     for i=1,#(page.fields) do
         local f = page.fields[i]
 
-        local text_options = globalTextOptions
+        local text_options = (f.to or globalTextOptions)
         if i == currentLine then
-            text_options = INVERS
+            text_options = text_options + INVERS
             if gState == EDITING then
               text_options = text_options + BLINK
             end
@@ -192,7 +192,7 @@ local function drawScreen(page,page_locked)
         local spacing = 20
 
         if f.t ~= nil then
-            lcd.drawText(f.x, f.y, f.t .. ":", globalTextOptions)
+            lcd.drawText(f.x, f.y, f.t, text_options)
             if f.sp ~= nil then
                 spacing = f.sp
             end
