@@ -26,8 +26,8 @@ supportedProtocols =
         rssi            = function() return getValue("RSSI") end,
         exitFunc        = function() return 0 end,
         push            = sportTelemetryPush,
-        maxTxBufferSize = 8,
-        maxRxBufferSize = 8
+        maxTxBufferSize = 6,
+        maxRxBufferSize = 6
     },
     crsf =
     {
