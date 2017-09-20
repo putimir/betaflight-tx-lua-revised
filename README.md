@@ -16,6 +16,8 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now availa
 
 ## Installing
 
+***Make sure you are using Crossfire Transmitter module FW 2.06 uncheck show unstable releases in the TBS Agent to use this current version***
+
 If you are coming from a previous version, it's recommended to remove all files from previous installations.  Simply delete the entire /SCRIPTS/BF directory and delete CFX9.lua and/or SPX9.lua from your /SCRIPTS/TELEMETRY directory.
 
 ***If you are using CRSF, this script will only work on Betaflight 3.2.0-rc5 or greater!  Please download and flash Betaflight to a new version before continuing.***
