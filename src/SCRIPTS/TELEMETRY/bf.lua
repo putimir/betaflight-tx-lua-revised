@@ -27,7 +27,9 @@ supportedProtocols =
         exitFunc        = function() return 0 end,
         push            = sportTelemetryPush,
         maxTxBufferSize = 6,
-        maxRxBufferSize = 6
+        maxRxBufferSize = 6,
+        saveMaxRetries  = 2,
+        saveTimeout     = 150
     },
     crsf =
     {
@@ -36,7 +38,9 @@ supportedProtocols =
         exitFunc        = function() return "/CROSSFIRE/crossfire.lua" end,
         push            = crossfireTelemetryPush,
         maxTxBufferSize = 8,
-        maxRxBufferSize = 58
+        maxRxBufferSize = 58,
+        saveMaxRetries  = 2,
+        saveTimeout     = 150
     }
 }
 
