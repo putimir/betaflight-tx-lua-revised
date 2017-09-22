@@ -180,17 +180,20 @@ local function drawScreen(page,page_locked)
         local f = page.fields[i]
 
         local text_options = f.to or globalTextOptions
+        local heading_options = text_options
+        local value_options = text_options
+        
         if i == currentLine then
-            text_options = text_options + INVERS
+                value_options = text_options + INVERS
             if gState == EDITING then
-              text_options = text_options + BLINK
+                value_options = text_options + BLINK
             end
         end
 
         local spacing = 20
 
         if f.t ~= nil then
-            lcd.drawText(f.x, f.y, f.t, text_options)
+            lcd.drawText(f.x, f.y, f.t, heading_options)
             if f.sp ~= nil then
                 spacing = f.sp
             end
@@ -220,7 +223,7 @@ local function drawScreen(page,page_locked)
                 val = f.table[f.value]
             end
         end
-        lcd.drawText(f.x + spacing, f.y, val, text_options)
+        lcd.drawText(f.x + spacing, f.y, val, value_options)
 
     end
 end
