@@ -186,7 +186,7 @@ local function drawScreen(page,page_locked)
         if i == currentLine then
                 value_options = text_options + INVERS
             if gState == EDITING then
-                value_options = text_options + BLINK
+                value_options = value_options + BLINK
             end
         end
 
