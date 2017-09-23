@@ -1,15 +1,38 @@
+local pageStatus = 
+{
+    display     = 2,
+    editing     = 3,
+    saving      = 4,
+    displayMenu = 5,
+}
 
-local MSP_REBOOT = 68
-local MSP_EEPROM_WRITE = 250
-local REQ_TIMEOUT = 80 -- 800ms request timeout
+local interaction = 
+{ 
+    enterRelease    = EVT_ENTER_BREAK,
+    enterLongPress  = EVT_ENTER_LONG,
+    exitRelease     = EVT_EXIT_BREAK,
+    menuRelease     = EVT_MENU_BREAK,
+    menuLongPress   = EVT_MENU_LONG,
+    minusRelease    = EVT_MINUS_BREAK,
+    minusPress      = EVT_MINUS_FIRST,
+    minusRepeat     = EVT_MINUS_REPT,
+    pageDnPress     = EVT_PAGEDN_FIRST,
+    pageUpPress     = EVT_PAGEUP_FIRST,
+    plusRelease     = EVT_PLUS_BREAK,
+    plusPress       = EVT_PLUS_FIRST,
+    plusRepeat      = EVT_PLUS_REPT,
+    rotateDialLeft  = EVT_ROT_LEFT,
+    rotateDialRight = EVT_ROT_RIGHT
+}
 
-local PAGE_DISPLAY = 2
-local EDITING      = 3
-local PAGE_SAVING  = 4
-local MENU_DISP    = 5
+local uiMsp = 
+{
+    reboot = 68,
+    eepromWrite = 250
+}
 
-local gState = PAGE_DISPLAY
-
+local currentState = pageStatus.display
+local requestTimeout = 80 -- 800ms request timeout
 local currentPage = 1
 local currentLine = 1
 local saveTS = 0
@@ -17,6 +40,10 @@ local saveTimeout = 0
 local saveRetries = 0
 local saveMaxRetries = 0
 local pageRequested = false
+local telemetryScreenActive = false
+local menuActive = false
+local lastRunTS = 0
+local killEnterBreak = 0
 
 SetupPages = {}
 
@@ -32,10 +59,10 @@ local function saveSettings(new)
         end
         protocol.mspWrite(page.write, page.values)
         saveTS = getTime()
-        if gState == PAGE_SAVING then
+        if currentState == pageStatus.saving then
             saveRetries = saveRetries + 1
         else
-            gState = PAGE_SAVING
+            currentState = pageStatus.saving
             saveRetries = 0
             saveMaxRetries = protocol.saveMaxRetries or 2 -- default 2
             saveTimeout = protocol.saveTimeout or 150     -- default 1.5s
@@ -45,17 +72,17 @@ end
 
 local function invalidatePages()
     SetupPages = {}
-    gState = PAGE_DISPLAY
+    currentState = pageStatus.display
     saveTS = 0
 end
 
 local function rebootFc()
-    protocol.mspRead(MSP_REBOOT)
+    protocol.mspRead(uiMsp.reboot)
     invalidatePages()
 end
 
 local function eepromWrite()
-    protocol.mspRead(MSP_EEPROM_WRITE)
+    protocol.mspRead(uiMsp.eepromWrite)
 end
 
 local menuList = {
@@ -73,17 +100,11 @@ local menuList = {
     }
 }
 
-local telemetryScreenActive = false
-local menuActive = false
-
 local function processMspReply(cmd,rx_buf)
-
     if cmd == nil or rx_buf == nil then
         return
     end
-
     local page = SetupPages[currentPage]
-
     if cmd == page.write then
         if page.eepromWrite then
             eepromWrite()
@@ -91,21 +112,18 @@ local function processMspReply(cmd,rx_buf)
         pageRequested = false
         return
     end
-
-    if cmd == MSP_EEPROM_WRITE then
+    if cmd == uiMsp.eepromWrite then
         if page.reboot then
             rebootFc()
         end
         invalidatePages()
-        gState = PAGE_DISPLAY
+        currentState = pageStatus.display
         saveTS = 0
         return
     end
-
     if cmd ~= page.read then
         return
     end
-
     if #(rx_buf) > 0 then
         page.values = {}
         for i=1,#(rx_buf) do
@@ -150,7 +168,7 @@ local function incMenu(inc)
 end
 
 local function requestPage(page)
-    if page.read and ((page.reqTS == nil) or (page.reqTS + REQ_TIMEOUT <= getTime())) then
+    if page.read and ((page.reqTS == nil) or (page.reqTS + requestTimeout <= getTime())) then
         page.reqTS = getTime()
         protocol.mspRead(page.read)
     end
@@ -162,11 +180,8 @@ function drawScreenTitle(screen_title)
 end
 
 local function drawScreen(page,page_locked)
-
     local screen_title = page.title
-
     drawScreenTitle("Betaflight / "..screen_title)
-
     for i=1,#(page.text) do
         local f = page.text[i]
         if f.to == nil then
@@ -175,25 +190,19 @@ local function drawScreen(page,page_locked)
             lcd.drawText(f.x, f.y, f.t, f.to)
         end
     end
-
     local val = "---"
-
     for i=1,#(page.fields) do
         local f = page.fields[i]
-
         local text_options = f.to or globalTextOptions
         local heading_options = text_options
         local value_options = text_options
-        
         if i == currentLine then
                 value_options = text_options + INVERS
-            if gState == EDITING then
+            if currentState == pageStatus.editing then
                 value_options = value_options + BLINK
             end
         end
-
         local spacing = 20
-
         if f.t ~= nil then
             lcd.drawText(f.x, f.y, f.t, heading_options)
             if f.sp ~= nil then
@@ -202,7 +211,6 @@ local function drawScreen(page,page_locked)
         else
             spacing = 0
         end
-
         if page.values then
             if (#(page.values) or 0) >= page.minBytes then
                 if not f.value and f.vals then
@@ -213,9 +221,7 @@ local function drawScreen(page,page_locked)
                 end
             end
         end
-   
-        val = "---"
-   
+        -- val = "---"
         if f.value then
             if f.upd and page.values then
                 f.upd(page)
@@ -226,7 +232,6 @@ local function drawScreen(page,page_locked)
             end
         end
         lcd.drawText(f.x + spacing, f.y, val, value_options)
-
     end
 end
 
@@ -279,124 +284,106 @@ local function drawMenu()
     end
 end
 
-local lastRunTS = 0
-local killEnterBreak = 0
-
 function run_ui(event)
-
     local now = getTime()
-
     -- if lastRunTS old than 500ms
     if lastRunTS + 50 < now then
         invalidatePages()
     end
     lastRunTS = now
-
-    if (gState == PAGE_SAVING) then
+    if (currentState == pageStatus.saving) then
         if (saveTS + saveTimeout < now) then
             if saveRetries < saveMaxRetries then
                 saveSettings()
             else
                 -- max retries reached
-                gState = PAGE_DISPLAY
+                currentState = pageStatus.display
                 invalidatePages()
             end
         end
     end
-
     -- process send queue
     mspProcessTxQ()
-
     -- navigation
-    if (event == EVT_MENU_LONG) then -- Taranis QX7 / X9
+    if (event == interaction.menuLongPress) then -- Taranis QX7 / X9
         menuActive = 1
-        gState = MENU_DISP
-
-    elseif EVT_PAGEUP_FIRST and (event == EVT_ENTER_LONG) then -- Horus
+        currentState = pageStatus.displayMenu
+    elseif interaction.pageUpPress and (event == interaction.enterLongPress) then -- Horus
         menuActive = 1
         killEnterBreak = 1
-        gState = MENU_DISP
-
+        currentState = pageStatus.displayMenu
     -- menu is currently displayed
-    elseif gState == MENU_DISP then
-        if event == EVT_EXIT_BREAK then
-            gState = PAGE_DISPLAY
-        elseif event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT then
+    elseif currentState == pageStatus.displayMenu then
+        if event == interaction.exitRelease then
+            currentState = pageStatus.display
+        elseif event == interaction.plusRelease or event == interaction.rotateDialLeft then
             incMenu(-1)
-        elseif event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT then
+        elseif event == interaction.minusRelease or event == interaction.rotateDialRight then
             incMenu(1)
-        elseif event == EVT_ENTER_BREAK then
+        elseif event == interaction.enterRelease then
             if killEnterBreak == 1 then
                 killEnterBreak = 0
             else
-                gState = PAGE_DISPLAY
+                currentState = pageStatus.display
                 menuList[menuActive].f()
             end
         end
-   -- normal page viewing
-    elseif gState <= PAGE_DISPLAY then
-        if event == EVT_PAGEUP_FIRST then
+    -- normal page viewing
+    elseif currentState <= pageStatus.display then
+        if event == interaction.pageUpPress then
             SetupPages[currentPage] = nil
             incPage(-1)
-        elseif event == EVT_MENU_BREAK or event == EVT_PAGEDN_FIRST then
+        elseif event == interaction.menuRelease or event == interaction.pageDnPress then
             SetupPages[currentPage] = nil
             incPage(1)
-        elseif event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT then
+        elseif event == interaction.plusRelease or event == interaction.rotateDialLeft then
             incLine(-1)
-        elseif event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT then
+        elseif event == interaction.minusRelease or event == interaction.rotateDialRight then
             incLine(1)
-        elseif event == EVT_ENTER_BREAK then
+        elseif event == interaction.enterRelease then
             local page = SetupPages[currentPage]
             local field = page.fields[currentLine]
             local idx = field.i or currentLine
             if page.values and page.values[idx] and (field.ro ~= true) then
-                gState = EDITING
+                currentState = pageStatus.editing
             end
-        elseif event == EVT_EXIT_BREAK then
+        elseif event == interaction.exitRelease then
             return protocol.exitFunc();
         end
     -- editing value
-    elseif gState == EDITING then
-        if (event == EVT_EXIT_BREAK) or (event == EVT_ENTER_BREAK) then
-            gState = PAGE_DISPLAY
-        elseif event == EVT_PLUS_FIRST or event == EVT_PLUS_REPT or event == EVT_ROT_RIGHT then
+    elseif currentState == pageStatus.editing then
+        if (event == interaction.exitRelease) or (event == interaction.enterRelease) then
+            currentState = pageStatus.display
+        elseif event == interaction.plusPress or event == interaction.plusRepeat or event == interaction.rotateDialRight then
             incValue(1)
-        elseif event == EVT_MINUS_FIRST or event == EVT_MINUS_REPT or event == EVT_ROT_LEFT then
+        elseif event == interaction.minusPress or event == interaction.minusRepeat or event == interaction.rotateDialLeft then
             incValue(-1)
         end
     end
-
     if SetupPages[currentPage] == nil then
         SetupPages[currentPage] = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
     end
-
     local page_locked = false
     local page = SetupPages[currentPage]
-
-    if not page.values and gState == PAGE_DISPLAY then
+    if not page.values and currentState == pageStatus.display then
         requestPage(page)
         page_locked = true
     end
-
     lcd.clear()
     if TEXT_BGCOLOR then
         lcd.drawFilledRectangle(0, 0, LCD_W, LCD_H, TEXT_BGCOLOR)
     end
-
     drawScreen(page,page_locked)
-
     if protocol.rssi() == 0 then
         lcd.drawText(NoTelem[1],NoTelem[2],NoTelem[3],NoTelem[4])
     end
-
-    if gState == MENU_DISP then
+    if currentState == pageStatus.displayMenu then
         drawMenu()
-    elseif gState == PAGE_SAVING then
+    elseif currentState == pageStatus.saving then
         lcd.drawFilledRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,backgroundFill)
         lcd.drawRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,SOLID)
         lcd.drawText(SaveBox.x+SaveBox.x_offset,SaveBox.y+SaveBox.h_offset,"Saving...",DBLSIZE + BLINK + (globalTextOptions))
     end
-
     processMspReply(mspPollReply())
     return 0
 end
