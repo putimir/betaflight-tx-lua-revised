@@ -18,6 +18,8 @@ local saveRetries = 0
 local saveMaxRetries = 0
 local pageRequested = false
 
+SetupPages = {}
+
 backgroundFill = backgroundFill or ERASE
 foregroundColor = foregroundColor or SOLID
 globalTextOptions = globalTextOptions or 0
