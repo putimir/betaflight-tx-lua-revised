@@ -13,8 +13,11 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now availa
 * Creating templates for new transmitters is now easier than ever.  There is never a need to touch the common code when creating new or adjusting existing templates.  If you are interested in building screen templates for the X7 or Horus transmitters, feel free to reach out.
 ### Changes in v1.0-rc2
 * Corrected FrSky Buffer Sizes
+* Added RX screen
 
 ## Installing
+
+***Make sure you are using Crossfire Transmitter module FW 2.06 uncheck show unstable releases in the TBS Agent to use this current version***
 
 If you are coming from a previous version, it's recommended to remove all files from previous installations.  Simply delete the entire /SCRIPTS/BF directory and delete CFX9.lua and/or SPX9.lua from your /SCRIPTS/TELEMETRY directory.
 

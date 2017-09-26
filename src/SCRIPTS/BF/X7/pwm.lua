@@ -21,7 +21,7 @@ return {
         { x = 85, y = 14, vals = { 4 }, min = 0, max = 9, to = SMLSIZE, table = { [0] = "OFF", "OS125", "OS42", "MSHOT","BRSH", "DS150", "DS300", "DS600","DS1200", "PS1000" } },
         { x = 85, y = 24, vals = { 3 }, min = 0, max = 1, to = SMLSIZE, table = { [0] = "OFF", "ON" } },
         { x = 85, y = 34, vals = { 5, 6 }, min = 200, max = 32000, to = SMLSIZE },
-        { x = 85, y = 44, vals = { 7, 8 }, min = 2000, max = 32000, to = SMLSIZE, scale = 100 },
+        { x = 85, y = 44, vals = { 7, 8 }, min = 0, max = 2000, to = SMLSIZE, scale = 100 },
     },
     calculateGyroRates = function(self, baseRate)
         self.gyroRates = {}

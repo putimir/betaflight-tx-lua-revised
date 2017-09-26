@@ -18,6 +18,8 @@ local saveRetries = 0
 local saveMaxRetries = 0
 local pageRequested = false
 
+SetupPages = {}
+
 backgroundFill = backgroundFill or ERASE
 foregroundColor = foregroundColor or SOLID
 globalTextOptions = globalTextOptions or 0
@@ -28,7 +30,6 @@ local function saveSettings(new)
         if page.preSave then
             page.preSave(page)
         end
-        --mspWritePackage(page.write, page.values)
         protocol.mspWrite(page.write, page.values)
         saveTS = getTime()
         if gState == PAGE_SAVING then
@@ -36,8 +37,8 @@ local function saveSettings(new)
         else
             gState = PAGE_SAVING
             saveRetries = 0
-            saveMaxRetries = page.saveMaxRetries or 2 -- default 2
-            saveTimeout = page.saveTimeout or 150     -- default 1.5s
+            saveMaxRetries = protocol.saveMaxRetries or 2 -- default 2
+            saveTimeout = protocol.saveTimeout or 150     -- default 1.5s
         end
     end
 end
@@ -151,7 +152,6 @@ end
 local function requestPage(page)
     if page.read and ((page.reqTS == nil) or (page.reqTS + REQ_TIMEOUT <= getTime())) then
         page.reqTS = getTime()
-        --mspReadPackage(page.read)
         protocol.mspRead(page.read)
     end
 end
@@ -181,18 +181,21 @@ local function drawScreen(page,page_locked)
     for i=1,#(page.fields) do
         local f = page.fields[i]
 
-        local text_options = (f.to or globalTextOptions)
+        local text_options = f.to or globalTextOptions
+        local heading_options = text_options
+        local value_options = text_options
+        
         if i == currentLine then
-            text_options = text_options + INVERS
+                value_options = text_options + INVERS
             if gState == EDITING then
-              text_options = text_options + BLINK
+                value_options = value_options + BLINK
             end
         end
 
         local spacing = 20
 
         if f.t ~= nil then
-            lcd.drawText(f.x, f.y, f.t, text_options)
+            lcd.drawText(f.x, f.y, f.t, heading_options)
             if f.sp ~= nil then
                 spacing = f.sp
             end
@@ -222,7 +225,7 @@ local function drawScreen(page,page_locked)
                 val = f.table[f.value]
             end
         end
-        lcd.drawText(f.x + spacing, f.y, val, text_options)
+        lcd.drawText(f.x + spacing, f.y, val, value_options)
 
     end
 end
@@ -289,13 +292,15 @@ function run_ui(event)
     end
     lastRunTS = now
 
-    if (gState == PAGE_SAVING) and (saveTS + saveTimeout < now) then
-        if saveRetries < saveMaxRetries then
-            saveSettings()
-        else
-            -- max retries reached
-            gState = PAGE_DISPLAY
-            invalidatePages()
+    if (gState == PAGE_SAVING) then
+        if (saveTS + saveTimeout < now) then
+            if saveRetries < saveMaxRetries then
+                saveSettings()
+            else
+                -- max retries reached
+                gState = PAGE_DISPLAY
+                invalidatePages()
+            end
         end
     end
 
@@ -368,7 +373,7 @@ function run_ui(event)
     local page_locked = false
     local page = SetupPages[currentPage]
 
-    if not page.values then
+    if not page.values and gState == PAGE_DISPLAY then
         requestPage(page)
         page_locked = true
     end
