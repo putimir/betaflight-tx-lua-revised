@@ -1,3 +1,4 @@
+
 supportedRadios = 
 {
     ["x9d"] =     
@@ -13,7 +14,6 @@ supportedRadios =
 }
 
 local ver, rad, maj, min, rev = getVersion()
-
 local radio = supportedRadios[rad]
 
 if not radio then
