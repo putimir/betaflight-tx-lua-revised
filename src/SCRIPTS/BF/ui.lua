@@ -1,28 +1,11 @@
+local userEvent = assert(loadScript(SCRIPT_HOME.."/events.lua"))()
+
 local pageStatus = 
 {
     display     = 2,
     editing     = 3,
     saving      = 4,
     displayMenu = 5,
-}
-
-local interaction = 
-{ 
-    enterRelease    = EVT_ENTER_BREAK,
-    enterLongPress  = EVT_ENTER_LONG,
-    exitRelease     = EVT_EXIT_BREAK,
-    menuRelease     = EVT_MENU_BREAK,
-    menuLongPress   = EVT_MENU_LONG,
-    minusRelease    = EVT_MINUS_BREAK,
-    minusPress      = EVT_MINUS_FIRST,
-    minusRepeat     = EVT_MINUS_REPT,
-    pageDnPress     = EVT_PAGEDN_FIRST,
-    pageUpPress     = EVT_PAGEUP_FIRST,
-    plusRelease     = EVT_PLUS_BREAK,
-    plusPress       = EVT_PLUS_FIRST,
-    plusRepeat      = EVT_PLUS_REPT,
-    rotateDialLeft  = EVT_ROT_LEFT,
-    rotateDialRight = EVT_ROT_RIGHT
 }
 
 local uiMsp = 
@@ -305,22 +288,22 @@ function run_ui(event)
     -- process send queue
     mspProcessTxQ()
     -- navigation
-    if (event == interaction.menuLongPress) then -- Taranis QX7 / X9
+    if (event == userEvent.longPress.menu) then -- Taranis QX7 / X9
         menuActive = 1
         currentState = pageStatus.displayMenu
-    elseif interaction.pageUpPress and (event == interaction.enterLongPress) then -- Horus
+    elseif userEvent.press.pageUp and (event == userEvent.longPress.enter) then -- Horus
         menuActive = 1
         killEnterBreak = 1
         currentState = pageStatus.displayMenu
     -- menu is currently displayed
     elseif currentState == pageStatus.displayMenu then
-        if event == interaction.exitRelease then
+        if event == userEvent.release.exit then
             currentState = pageStatus.display
-        elseif event == interaction.plusRelease or event == interaction.rotateDialLeft then
+        elseif event == userEvent.release.plus or event == userEvent.dial.left then
             incMenu(-1)
-        elseif event == interaction.minusRelease or event == interaction.rotateDialRight then
+        elseif event == userEvent.release.minus or event == userEvent.dial.right then
             incMenu(1)
-        elseif event == interaction.enterRelease then
+        elseif event == userEvent.release.enter then
             if killEnterBreak == 1 then
                 killEnterBreak = 0
             else
@@ -330,33 +313,33 @@ function run_ui(event)
         end
     -- normal page viewing
     elseif currentState <= pageStatus.display then
-        if event == interaction.pageUpPress then
+        if event == userEvent.press.pageUp then
             SetupPages[currentPage] = nil
             incPage(-1)
-        elseif event == interaction.menuRelease or event == interaction.pageDnPress then
+        elseif event == userEvent.release.menu or event == userEvent.press.pageDown then
             SetupPages[currentPage] = nil
             incPage(1)
-        elseif event == interaction.plusRelease or event == interaction.rotateDialLeft then
+        elseif event == userEvent.release.plus or event == userEvent.dial.left then
             incLine(-1)
-        elseif event == interaction.minusRelease or event == interaction.rotateDialRight then
+        elseif event == userEvent.release.minus or event == userEvent.dial.right then
             incLine(1)
-        elseif event == interaction.enterRelease then
+        elseif event == userEvent.release.enter then
             local page = SetupPages[currentPage]
             local field = page.fields[currentLine]
             local idx = field.i or currentLine
             if page.values and page.values[idx] and (field.ro ~= true) then
                 currentState = pageStatus.editing
             end
-        elseif event == interaction.exitRelease then
+        elseif event == userEvent.release.exit then
             return protocol.exitFunc();
         end
     -- editing value
     elseif currentState == pageStatus.editing then
-        if (event == interaction.exitRelease) or (event == interaction.enterRelease) then
+        if (event == userEvent.release.exit) or (event == userEvent.release.enter) then
             currentState = pageStatus.display
-        elseif event == interaction.plusPress or event == interaction.plusRepeat or event == interaction.rotateDialRight then
+        elseif event == userEvent.press.plus or event == userEvent.repeatPress.plus or event == userEvent.dial.right then
             incValue(1)
-        elseif event == interaction.minusPress or event == interaction.minusRepeat or event == interaction.rotateDialLeft then
+        elseif event == userEvent.press.minus or event == userEvent.repeatPress.minus or event == userEvent.dial.left then
             incValue(-1)
         end
     end
