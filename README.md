@@ -14,6 +14,7 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now availa
 ### Changes in v1.0-rc2
 * Corrected FrSky Buffer Sizes
 * Added RX screen
+* Corrected issue with range of idle offset
 
 ## Installing
 
