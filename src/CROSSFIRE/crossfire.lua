@@ -69,11 +69,11 @@ local function run(event)
   if event == nil then
     error("Cannot be run as a model script!")
     return 2
-  elseif event == EVT_EXIT_BREAK then
+  elseif event == EVT_EXIT_BREAK or EVT_ROT_BREAK then
     return 2
-  elseif event == EVT_PLUS_FIRST or event == EVT_PLUS_REPT then
+  elseif event == EVT_PLUS_FIRST or EVT_ROT_LEFT or event == EVT_PLUS_REPT then
     selectDevice(1)
-  elseif event == EVT_MINUS_FIRST or event == EVT_MINUS_REPT then
+  elseif event == EVT_MINUS_FIRST or EVT_ROT_RIGHT or event == EVT_MINUS_REPT then
     selectDevice(-1)
   end
 
@@ -84,7 +84,7 @@ local function run(event)
   else
     for i=1, #devices do
       local attr = (lineIndex == i and INVERS or 0)
-      if event == EVT_ENTER_BREAK and attr == INVERS then 
+      if event == EVT_ENTER_BREAK or EVT_ROT_BREAK and attr == INVERS then 
             if devices[i].id == 0xC8 then
               return "/SCRIPTS/TELEMETRY/bf.lua"
             else
