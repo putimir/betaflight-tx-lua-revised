@@ -4,7 +4,8 @@ return {
     reboot            = true,
     eepromWrite       = true,
     title             = "PWM",
-    minBytes             = 9,
+    minBytes          = 9,
+    persisted         = false,
     text= {
         { t = "32K", x = 48, y = 14, to = SMLSIZE },
         { t = "Gyro Rt", x = 29, y = 24, to = SMLSIZE },

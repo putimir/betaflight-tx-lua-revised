@@ -1,4 +1,5 @@
 local userEvent = assert(loadScript(SCRIPT_HOME.."/events.lua"))()
+local serializer = assert(loadScript(SCRIPT_HOME.."/serialize.lua"))()
 
 local pageStatus = 
 {
@@ -8,6 +9,14 @@ local pageStatus =
     displayMenu = 5,
 }
 
+local persistence =
+{
+    disconnected = 1,
+    notApplied = 2,
+    pending = 3,
+    applied = 4
+}
+
 local uiMsp = 
 {
     reboot = 68,
@@ -15,6 +24,8 @@ local uiMsp =
 }
 
 local currentState = pageStatus.display
+local persistenceState = persistence.disconnected
+local persistPage = 0
 local requestTimeout = 80 -- 800ms request timeout
 local currentPage = 1
 local currentLine = 1
@@ -36,6 +47,10 @@ globalTextOptions = globalTextOptions or 0
 
 local function saveSettings(new)
     if Page.values then
+        if Page.persisted and persistenceState == persistence.applied then
+            serializer.filename = radio.persistHome..PageFiles[currentPage]
+            serializer.serialize(serializer, Page.values)
+        end
         if Page.preSave then
             Page.preSave(Page)
         end
@@ -112,6 +127,9 @@ local function processMspReply(cmd,rx_buf)
         end
         if Page.postLoad then
             Page.postLoad(Page)
+        end
+        if persistenceState == persistence.pending then
+            persistenceState = persistence.notApplied
         end
     end
 end
@@ -262,6 +280,58 @@ local function drawMenu()
     end
 end
 
+function loadPageFile(idx)
+    if idx <= #(PageFiles) then
+        Page = assert(loadScript(radio.templateHome .. PageFiles[idx]))()
+    end
+end
+
+function checkPersistence() 
+    if protocol.rssi() == 0 then
+        persistenceState = persistence.disconnected
+    else
+        if persistenceState == persistence.applied then
+            return
+        elseif persistenceState == persistence.disconnected then
+            persistenceState = persistence.notApplied
+        elseif persistenceState == persistence.notApplied then
+            if currentPage == #(PageFiles) then
+                persistenceState = persistence.applied
+                currentPage = 1
+                Page = nil
+                return
+            else
+                Page = nil
+                incPage(1)
+                loadPageFile(currentPage)
+                if Page.persisted == true then
+                    requestPage()
+                    persistenceState = persistence.pending
+                end
+            end
+        elseif persistenceState == persistence.pending then
+            if Page.values and currentState ~= pageStatus.saving then
+                if (#(Page.values) or 0) >= Page.minBytes then
+                    local persistedValues = assert(loadScript(radio.persistHome .. PageFiles[currentPage]))()
+                    if persistedValues then
+                        if Page.applyPersistence(Page,persistedValues) then
+                            saveSettings()
+                        end
+                    else
+                        persistenceState = persistence.notApplied
+                    end
+                end
+            end
+        end
+    end
+end
+
+function drawSaveBox(message)
+    lcd.drawFilledRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,backgroundFill)
+    lcd.drawRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,SOLID)
+    lcd.drawText(SaveBox.x+SaveBox.x_offset,SaveBox.y+SaveBox.h_offset,message,DBLSIZE + BLINK + (globalTextOptions))
+end
+
 function run_ui(event)
     local now = getTime()
     -- if lastRunTS old than 500ms
@@ -277,89 +347,94 @@ function run_ui(event)
                 -- max retries reached
                 currentState = pageStatus.display
                 invalidatePages()
+                persistenceState = persistence.notApplied
             end
         end
     end
     -- process send queue
     mspProcessTxQ()
-    -- navigation
-    if (event == userEvent.longPress.menu) then -- Taranis QX7 / X9
-        menuActive = 1
-        currentState = pageStatus.displayMenu
-    elseif userEvent.press.pageUp and (event == userEvent.longPress.enter) then -- Horus
-        menuActive = 1
-        killEnterBreak = 1
-        currentState = pageStatus.displayMenu
-    -- menu is currently displayed
-    elseif currentState == pageStatus.displayMenu then
-        if event == userEvent.release.exit then
-            currentState = pageStatus.display
-        elseif event == userEvent.release.plus or event == userEvent.dial.left then
-            incMenu(-1)
-        elseif event == userEvent.release.minus or event == userEvent.dial.right then
-            incMenu(1)
-        elseif event == userEvent.release.enter then
-            if killEnterBreak == 1 then
-                killEnterBreak = 0
-            else
-                currentState = pageStatus.display
-                menuList[menuActive].f()
-            end
-        end
-    -- normal page viewing
-    elseif currentState <= pageStatus.display then
-        if event == userEvent.press.pageUp then
-            Page = nil
-            incPage(-1)
-        elseif event == userEvent.release.menu or event == userEvent.press.pageDown then
-            Page = nil
-            incPage(1)
-        elseif event == userEvent.release.plus or event == userEvent.dial.left then
-            incLine(-1)
-        elseif event == userEvent.release.minus or event == userEvent.dial.right then
-            incLine(1)
-        elseif event == userEvent.release.enter then
-            local field = Page.fields[currentLine]
-            local idx = field.i or currentLine
-            if Page.values and Page.values[idx] and (field.ro ~= true) then
-                currentState = pageStatus.editing
-            end
-        elseif event == userEvent.release.exit then
-            return protocol.exitFunc();
-        end
-    -- editing value
-    elseif currentState == pageStatus.editing then
-        if (event == userEvent.release.exit) or (event == userEvent.release.enter) then
-            currentState = pageStatus.display
-        elseif event == userEvent.press.plus or event == userEvent.repeatPress.plus or event == userEvent.dial.right then
-            incValue(1)
-        elseif event == userEvent.press.minus or event == userEvent.repeatPress.minus or event == userEvent.dial.left then
-            incValue(-1)
-        end
-    end
-    if Page == nil then
-        Page = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
-    end
-    if not Page.values and currentState == pageStatus.display then
-        requestPage()
-    end
     lcd.clear()
     if TEXT_BGCOLOR then
         lcd.drawFilledRectangle(0, 0, LCD_W, LCD_H, TEXT_BGCOLOR)
     end
-    drawScreen()
+    checkPersistence()
+    if persistenceState == persistence.applied or persistenceState == persistence.disconnected then
+        -- navigation
+        if (event == userEvent.longPress.menu) then -- Taranis QX7 / X9
+            menuActive = 1
+            currentState = pageStatus.displayMenu
+        elseif userEvent.press.pageUp and (event == userEvent.longPress.enter) then -- Horus
+            menuActive = 1
+            killEnterBreak = 1
+            currentState = pageStatus.displayMenu
+        -- menu is currently displayed
+        elseif currentState == pageStatus.displayMenu then
+            if event == userEvent.release.exit then
+                currentState = pageStatus.display
+            elseif event == userEvent.release.plus or event == userEvent.dial.left then
+                incMenu(-1)
+            elseif event == userEvent.release.minus or event == userEvent.dial.right then
+                incMenu(1)
+            elseif event == userEvent.release.enter then
+                if killEnterBreak == 1 then
+                    killEnterBreak = 0
+                else
+                    currentState = pageStatus.display
+                    menuList[menuActive].f()
+                end
+            end
+        -- normal page viewing
+        elseif currentState <= pageStatus.display then
+            if event == userEvent.press.pageUp then
+                Page = nil
+                incPage(-1)
+            elseif event == userEvent.release.menu or event == userEvent.press.pageDown then
+                Page = nil
+                incPage(1)
+            elseif event == userEvent.release.plus or event == userEvent.dial.left then
+                incLine(-1)
+            elseif event == userEvent.release.minus or event == userEvent.dial.right then
+                incLine(1)
+            elseif event == userEvent.release.enter then
+                local field = Page.fields[currentLine]
+                local idx = field.i or currentLine
+                if Page.values and Page.values[idx] and (field.ro ~= true) then
+                    currentState = pageStatus.editing
+                end
+            elseif event == userEvent.release.exit then
+                return protocol.exitFunc();
+            end
+        -- editing value
+        elseif currentState == pageStatus.editing then
+            if (event == userEvent.release.exit) or (event == userEvent.release.enter) then
+                currentState = pageStatus.display
+            elseif event == userEvent.press.plus or event == userEvent.repeatPress.plus or event == userEvent.dial.right then
+                incValue(1)
+            elseif event == userEvent.press.minus or event == userEvent.repeatPress.minus or event == userEvent.dial.left then
+                incValue(-1)
+            end
+        end
+        if Page == nil then
+            loadPageFile(currentPage)
+        end
+        if not Page.values and currentState == pageStatus.display then
+            requestPage()
+        end
+        drawScreen()        
+    end
     if protocol.rssi() == 0 then
         lcd.drawText(NoTelem[1],NoTelem[2],NoTelem[3],NoTelem[4])
     end
     if currentState == pageStatus.displayMenu then
         drawMenu()
+    elseif persistenceState == persistence.pending then
+        drawSaveBox("Syncing...")
     elseif currentState == pageStatus.saving then
-        lcd.drawFilledRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,backgroundFill)
-        lcd.drawRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,SOLID)
-        lcd.drawText(SaveBox.x+SaveBox.x_offset,SaveBox.y+SaveBox.h_offset,"Saving...",DBLSIZE + BLINK + (globalTextOptions))
+        drawSaveBox("Saving...")
     end
+        
     processMspReply(mspPollReply())
     return 0
 end
 
-return run_ui 
+return { run=run_ui }

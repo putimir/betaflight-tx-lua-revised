@@ -8,6 +8,7 @@ return {
     saveTimeout    = 300, -- 3s
     title          = "VTX", 
     minBytes       = 5,
+    persisted      = true,
     text = {},
     fields = {
         { t = "Band",    x = 25,  y = 14, sp = 50, min=1, max=5, vals = { 2 }, to = SMLSIZE, table = { "A", "B", "E", "F", "R" }, upd = function(self) self.updateVTXFreq(self) end },
@@ -24,6 +25,27 @@ return {
         { 5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880 }, -- FatShark
         { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917 }, -- RaceBand
     },
+    applyPersistence = function(self, persistedValues)
+        local changed = false
+        local vtxDifferent = false
+        if self.values[1] == 255 then
+            return false
+        end
+        if self.values[1] ~= persistedValues[1] then
+            vtxDifferent = true
+        end
+        for i=2, #(self.values)-1 do
+            if self.values[i] ~= persistedValues[i] then
+                changed = true
+                if vtxDifferent and i == 4 then
+                    self.values[i] = 1 -- default to 25mw
+                else
+                    self.values[i] = persistedValues[i]
+                end
+            end
+        end
+        return changed or vtxDifferent
+    end,
     postLoad = function (self)
         if self.values[2] ==0 or self.values[3] == 0 or self.values[4] == 0 then
             self.values = {}

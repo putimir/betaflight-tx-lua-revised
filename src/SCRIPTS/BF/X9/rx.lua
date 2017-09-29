@@ -5,6 +5,7 @@ return {
    reboot         = false,
    eepromWrite    = true,
    minBytes       = 23,
+   persisted      = false,
    text = {},
    fields = {
       { t = "Stick Min",  x =  30, y = 20, sp = 45, min = 1000, max = 2000, vals = { 6, 7 }, to = SMLSIZE },

@@ -5,6 +5,7 @@ return {
    reboot         = false,
    eepromWrite    = true,
    minBytes       = 12,
+   persisted      = false,
    text = {
       { t = "RC",       x = 43,  y = 11, to = SMLSIZE },
       { t = "Rate",     x = 38,  y = 18, to = SMLSIZE },

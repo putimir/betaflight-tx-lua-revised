@@ -9,4 +9,4 @@ assert(loadScript(SCRIPT_HOME.."/MSP/common.lua"))()
 
 local run = assert(loadScript(SCRIPT_HOME.."/ui.lua"))()
 
-return { run=run }
+return run

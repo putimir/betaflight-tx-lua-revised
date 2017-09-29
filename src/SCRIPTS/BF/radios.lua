@@ -20,4 +20,6 @@ if not radio then
     error("Radio not supported: "..rad)
 end
 
+radio.persistHome = radio.templateHome.."PERSIST/"
+
 return radio
