@@ -1,5 +1,5 @@
 # betaflight-tx-lua-revised
-Various enhancements to the typical betaflight-tx-lua-scripts design.  Borrowed some existing code, but added more features and improved memory management.  Currently only implemented for the X9 series transmitters.
+Various enhancements to the typical betaflight-tx-lua-scripts design.  Borrowed some existing code, but added more features and improved memory management.  Currently only implemented for the X9 series transmitters.  Big thanks to Trappy, Remo, and Preston from TBS and Steffen Windoffer, Michael Keller, Martin Budden, and Petr Ledvina from Betaflight for your everything!  We wouldn't be able to have this without you.
 
 ## v1.0-rc2 Released!
 The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now available for download and testing.  Until a stable release can be completed, this code is currently in core development, so expect there to be occasional issues that need resolution.  If you encounter any problems, please open an issue and clearly describe the problem and any steps taken so that it can be reproduced.
