@@ -28,19 +28,18 @@ local menuActive = false
 local lastRunTS = 0
 local killEnterBreak = 0
 
-SetupPages = {}
+Page = nil
 
 backgroundFill = backgroundFill or ERASE
 foregroundColor = foregroundColor or SOLID
 globalTextOptions = globalTextOptions or 0
 
 local function saveSettings(new)
-    local page = SetupPages[currentPage]
-    if page.values then
-        if page.preSave then
-            page.preSave(page)
+    if Page.values then
+        if Page.preSave then
+            Page.preSave(Page)
         end
-        protocol.mspWrite(page.write, page.values)
+        protocol.mspWrite(Page.write, Page.values)
         saveTS = getTime()
         if currentState == pageStatus.saving then
             saveRetries = saveRetries + 1
@@ -54,7 +53,7 @@ local function saveSettings(new)
 end
 
 local function invalidatePages()
-    SetupPages = {}
+    Page = nil
     currentState = pageStatus.display
     saveTS = 0
 end
@@ -87,9 +86,8 @@ local function processMspReply(cmd,rx_buf)
     if cmd == nil or rx_buf == nil then
         return
     end
-    local page = SetupPages[currentPage]
-    if cmd == page.write then
-        if page.eepromWrite then
+    if cmd == Page.write then
+        if Page.eepromWrite then
             eepromWrite()
         end
         pageRequested = false
@@ -104,22 +102,22 @@ local function processMspReply(cmd,rx_buf)
         saveTS = 0
         return
     end
-    if cmd ~= page.read then
+    if cmd ~= Page.read then
         return
     end
     if #(rx_buf) > 0 then
-        page.values = {}
+        Page.values = {}
         for i=1,#(rx_buf) do
-            page.values[i] = rx_buf[i]
+            Page.values[i] = rx_buf[i]
         end
-        if page.postLoad then
-            page.postLoad(page)
+        if Page.postLoad then
+            Page.postLoad(Page)
         end
     end
 end
 
 local function MaxLines()
-    return #(SetupPages[currentPage].fields)
+    return #(Page.fields)
 end
 
 local function incPage(inc)
@@ -150,10 +148,10 @@ local function incMenu(inc)
     end
 end
 
-local function requestPage(page)
-    if page.read and ((page.reqTS == nil) or (page.reqTS + requestTimeout <= getTime())) then
-        page.reqTS = getTime()
-        protocol.mspRead(page.read)
+local function requestPage()
+    if Page.read and ((Page.reqTS == nil) or (Page.reqTS + requestTimeout <= getTime())) then
+        Page.reqTS = getTime()
+        protocol.mspRead(Page.read)
     end
 end
 
@@ -162,11 +160,11 @@ function drawScreenTitle(screen_title)
     lcd.drawText(1,1,screen_title,INVERS)
 end
 
-local function drawScreen(page,page_locked)
-    local screen_title = page.title
+local function drawScreen()
+    local screen_title = Page.title
     drawScreenTitle("Betaflight / "..screen_title)
-    for i=1,#(page.text) do
-        local f = page.text[i]
+    for i=1,#(Page.text) do
+        local f = Page.text[i]
         if f.to == nil then
             lcd.drawText(f.x, f.y, f.t, globalTextOptions)
         else
@@ -174,8 +172,8 @@ local function drawScreen(page,page_locked)
         end
     end
     local val = "---"
-    for i=1,#(page.fields) do
-        local f = page.fields[i]
+    for i=1,#(Page.fields) do
+        local f = Page.fields[i]
         local text_options = f.to or globalTextOptions
         local heading_options = text_options
         local value_options = text_options
@@ -194,20 +192,19 @@ local function drawScreen(page,page_locked)
         else
             spacing = 0
         end
-        if page.values then
-            if (#(page.values) or 0) >= page.minBytes then
+        if Page.values then
+            if (#(Page.values) or 0) >= Page.minBytes then
                 if not f.value and f.vals then
                     for idx=1, #(f.vals) do
-                        f.value = bit32.bor((f.value or 0), bit32.lshift(page.values[f.vals[idx]], (idx-1)*8))
+                        f.value = bit32.bor((f.value or 0), bit32.lshift(Page.values[f.vals[idx]], (idx-1)*8))
                     end
                     f.value = f.value/(f.scale or 1)
                 end
             end
         end
-        -- val = "---"
         if f.value then
-            if f.upd and page.values then
-                f.upd(page)
+            if f.upd and Page.values then
+                f.upd(Page)
             end
             val = f.value
             if f.table and f.table[f.value] then
@@ -228,21 +225,19 @@ local function clipValue(val,min,max)
 end
 
 local function getCurrentField()
-    local page = SetupPages[currentPage]
-    return page.fields[currentLine]
+    return Page.fields[currentLine]
 end
 
 local function incValue(inc)
-    local page = SetupPages[currentPage]
-    local f = page.fields[currentLine]
+    local f = Page.fields[currentLine]
     local idx = f.i or currentLine
     local scale = (f.scale or 1)
     f.value = clipValue(f.value + ((inc*(f.mult or 1))/scale), (f.min/scale) or 0, (f.max/scale) or 255)
     for idx=1, #(f.vals) do
-        page.values[f.vals[idx]] = bit32.rshift(f.value * scale, (idx-1)*8)
+        Page.values[f.vals[idx]] = bit32.rshift(f.value * scale, (idx-1)*8)
     end
-    if f.upd and page.values then
-        f.upd(page) 
+    if f.upd and Page.values then
+        f.upd(Page) 
     end
 end
 
@@ -314,20 +309,19 @@ function run_ui(event)
     -- normal page viewing
     elseif currentState <= pageStatus.display then
         if event == userEvent.press.pageUp then
-            SetupPages[currentPage] = nil
+            Page = nil
             incPage(-1)
         elseif event == userEvent.release.menu or event == userEvent.press.pageDown then
-            SetupPages[currentPage] = nil
+            Page = nil
             incPage(1)
         elseif event == userEvent.release.plus or event == userEvent.dial.left then
             incLine(-1)
         elseif event == userEvent.release.minus or event == userEvent.dial.right then
             incLine(1)
         elseif event == userEvent.release.enter then
-            local page = SetupPages[currentPage]
-            local field = page.fields[currentLine]
+            local field = Page.fields[currentLine]
             local idx = field.i or currentLine
-            if page.values and page.values[idx] and (field.ro ~= true) then
+            if Page.values and Page.values[idx] and (field.ro ~= true) then
                 currentState = pageStatus.editing
             end
         elseif event == userEvent.release.exit then
@@ -343,20 +337,17 @@ function run_ui(event)
             incValue(-1)
         end
     end
-    if SetupPages[currentPage] == nil then
-        SetupPages[currentPage] = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
+    if Page == nil then
+        Page = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
     end
-    local page_locked = false
-    local page = SetupPages[currentPage]
-    if not page.values and currentState == pageStatus.display then
-        requestPage(page)
-        page_locked = true
+    if not Page.values and currentState == pageStatus.display then
+        requestPage()
     end
     lcd.clear()
     if TEXT_BGCOLOR then
         lcd.drawFilledRectangle(0, 0, LCD_W, LCD_H, TEXT_BGCOLOR)
     end
-    drawScreen(page,page_locked)
+    drawScreen()
     if protocol.rssi() == 0 then
         lcd.drawText(NoTelem[1],NoTelem[2],NoTelem[3],NoTelem[4])
     end
