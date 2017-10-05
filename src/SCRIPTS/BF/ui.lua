@@ -94,7 +94,7 @@ local function processMspReply(cmd,rx_buf)
         return
     end
     if cmd == uiMsp.eepromWrite then
-        if page.reboot then
+        if Page.reboot then
             rebootFc()
         end
         invalidatePages()
