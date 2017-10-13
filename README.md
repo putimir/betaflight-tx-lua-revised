@@ -18,11 +18,9 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now availa
 
 ## Installing
 
-***Make sure you are using Crossfire Transmitter module FW 2.06 uncheck show unstable releases in the TBS Agent to use this current version***
-
 If you are coming from a previous version, it's recommended to remove all files from previous installations.  Simply delete the entire /SCRIPTS/BF directory and delete CFX9.lua and/or SPX9.lua from your /SCRIPTS/TELEMETRY directory.
 
-***If you are using CRSF, this script will only work on Betaflight 3.2.0-rc5 or greater!  Please download and flash Betaflight to a new version before continuing.***
+***There are a lot of firmware versions floating around causing some confusion.  If you are running Betaflight 3.2.0 stable, at the time of this update (13-Oct-17) you must be running Crossfire firmware 2.11 in order to reliably use these scripts.  If you are running newer versions of Betaflight (3.2.1 or greater), you can reliably use these scripts from Crossfire version 2.06 or greater.***
 
 !! IMPORTANT: DON'T COPY THE ENTIRE CONTENTS OF THIS REPOSITORY ONTO YOUR SDCARD !!
 
@@ -54,7 +52,7 @@ Setting up the script as a telemetry page will enable access at the press of a b
 3. Use the [-] button to move the cursor down to [Screen 1] and hit [ENT].
 4. Use the [+] or [-] buttons to select the [Script] option and press [ENT].
 5. Press [-] to move the cursor to the script selection field and hit [ENT].
-6. Select 'bf' and hit [ENTER].
+6. Select 'bf' and hit [ENT].
 7. Long-press [EXIT] to return to your model screen.
 
 To invoke the script, simply long-press the [PAGE] button from the model screen.
