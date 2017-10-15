@@ -55,7 +55,7 @@ local function refreshNext()
 end
 
 local function selectDevice(step)
-  lineIndex = 1 + ((lineIndex + step - 1 + #devices) % #devices)
+  lineIndex = 1 + ((lineIndex + step - 1 + #devices) % #devices)   ---1 +((0 -1 -1 + 2 ) %2)
 end
 
 -- Init
@@ -69,26 +69,27 @@ local function run(event)
   if event == nil then
     error("Cannot be run as a model script!")
     return 2
-  elseif event == EVT_EXIT_BREAK or EVT_ROT_BREAK then
+  elseif event == EVT_EXIT_BREAK then
     return 2
-  elseif event == EVT_PLUS_FIRST or EVT_ROT_LEFT or event == EVT_PLUS_REPT then
+  elseif event == EVT_PLUS_FIRST or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT then
     selectDevice(1)
-  elseif event == EVT_MINUS_FIRST or EVT_ROT_RIGHT or event == EVT_MINUS_REPT then
+  elseif event == EVT_MINUS_FIRST or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT then
     selectDevice(-1)
   end
 
   lcd.clear()
   lcd.drawScreenTitle("CROSSFIRE SETUP", 0, 0)
   if #devices == 0 then
-    lcd.drawText(24, 28, "Waiting for Crossfire devices...")
+    lcd.drawText(5, 28, "Waiting for ")
+	    lcd.drawText(9, 38, "Crossfire devices...", BLINK)
   else
     for i=1, #devices do
       local attr = (lineIndex == i and INVERS or 0)
-      if event == EVT_ENTER_BREAK or EVT_ROT_BREAK and attr == INVERS then 
+      if event == EVT_ENTER_BREAK or event == EVT_ROT_BREAK and attr == INVERS then 
             if devices[i].id == 0xC8 then
               return "/SCRIPTS/TELEMETRY/bf.lua"
             else
-              crossfireTelemetryPush(0x28, { devices[i].id, 0xEA })
+              crossfireTelemetryPush(0x28, { devices[lineIndex].id, 0xEA })
               return "device.lua"
             end
         end

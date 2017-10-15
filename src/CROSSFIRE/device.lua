@@ -174,7 +174,7 @@ local function fieldSignedSave(field, size)
 end
 
 local function fieldIntDisplay(field, y, attr)
-  lcd.drawNumber(140, y, field.value, LEFT + attr)
+  lcd.drawNumber(75, y, field.value, LEFT + attr)
   lcd.drawText(lcd.getLastPos(), y, field.unit, attr)
 end
 
@@ -238,7 +238,7 @@ local function fieldFloatDisplay(field, y, attr)
   else
     attrnum = LEFT + attr
   end
-  lcd.drawNumber(140, y, field.value, attrnum)
+  lcd.drawNumber(75, y, field.value, attrnum)
   lcd.drawText(lcd.getLastPos(), y, field.unit, attr)
 end
 
@@ -265,7 +265,7 @@ local function fieldTextSelectionSave(field)
 end
 
 local function fieldTextSelectionDisplay(field, y, attr)
-  lcd.drawText(140, y, field.values[field.value+1], attr)
+  lcd.drawText(75, y, field.values[field.value+1], attr)
   lcd.drawText(lcd.getLastPos(), y, field.unit, attr)
 end
 
@@ -288,10 +288,10 @@ end
 
 local function fieldStringDisplay(field, y, attr)
   if edit == true and attr then
-    lcd.drawText(140, y, field.value, FIXEDWIDTH)
-    lcd.drawText(134+6*charIndex, y, string.sub(field.value, charIndex, charIndex), FIXEDWIDTH + attr)
+    lcd.drawText(75, y, field.value, FIXEDWIDTH)
+    lcd.drawText(75+6*charIndex, y, string.sub(field.value, charIndex, charIndex), FIXEDWIDTH + attr)
   else
-    lcd.drawText(140, y, field.value, attr)
+    lcd.drawText(75, y, field.value, attr)
   end
 end
 
@@ -316,7 +316,7 @@ end
 local function fieldCommandDisplay(field, y, attr)
   lcd.drawText(0, y, field.name, attr)
   if field.info ~= "" then
-    lcd.drawText(140, y, "[" .. field.info .. "]")
+    lcd.drawText(75, y, "[" .. field.info .. "]")
   end
 end
 
@@ -403,7 +403,7 @@ end
 
 -- Main
 local function runDevicePage(event)
-  if event == EVT_EXIT_BREAK or EVT_ROT_BREAK then             -- exit script
+  if event == EVT_EXIT_BREAK then             -- exit script
     if edit == true then
       edit = false
       local field = getField(lineIndex)
@@ -414,7 +414,7 @@ local function runDevicePage(event)
     else
       return "crossfire.lua"
     end
-  elseif event == EVT_ENTER_BREAK or EVT_ROT_BREAK then        -- toggle editing/selecting current field
+  elseif event == EVT_ENTER_BREAK then --or EVT_ROT_BREAK then        -- toggle editing/selecting current field
     local field = getField(lineIndex)
     if field.name then
       if field.type == 10 then
@@ -435,15 +435,15 @@ local function runDevicePage(event)
       end
     end
   elseif edit then
-    if event == EVT_PLUS_FIRST or EVT_ROT_LEFT or event == EVT_PLUS_REPT then
+    if event == EVT_PLUS_FIRST or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT then
       incrField(1)
-    elseif event == EVT_MINUS_FIRST or EVT_ROT_RIGHT or event == EVT_MINUS_REPT then
+    elseif event == EVT_MINUS_FIRST or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT then
       incrField(-1)
     end
   else
-    if event == EVT_MINUS_FIRST or EVT_ROT_RIGHT then
+    if event == EVT_MINUS_FIRST or event == EVT_ROT_RIGHT then
       selectField(1)
-    elseif event == EVT_PLUS_FIRST or EVT_ROT_LEFT then
+    elseif event == EVT_PLUS_FIRST or event == EVT_ROT_LEFT then
       selectField(-1)
     end
   end
