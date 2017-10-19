@@ -1,4 +1,5 @@
 local userEvent = assert(loadScript(SCRIPT_HOME.."/events.lua"))()
+logger = assert(loadScript(SCRIPT_HOME.."/serialize.lua"))()
 
 local pageStatus = 
 {
@@ -27,6 +28,11 @@ local telemetryScreenActive = false
 local menuActive = false
 local lastRunTS = 0
 local killEnterBreak = 0
+
+logger.filename = SCRIPT_HOME.."/script.log"
+logger.openWrite(logger) -- truncate
+logger.closeFile(logger)
+logger.openAppend(logger)
 
 Page = nil
 
@@ -113,6 +119,9 @@ local function processMspReply(cmd,rx_buf)
         if Page.postLoad then
             Page.postLoad(Page)
         end
+        logger.append(logger, ":: Page Received ["..Page.title.."]: ")
+        logger.serializeAppend(logger, Page.values)
+        logger.append(logger, "\r\n")
     end
 end
 
@@ -151,6 +160,7 @@ end
 local function requestPage()
     if Page.read and ((Page.reqTS == nil) or (Page.reqTS + requestTimeout <= getTime())) then
         Page.reqTS = getTime()
+        logger.append(logger, ":: Requesting Page ["..Page.title.."]\r\n")
         protocol.mspRead(Page.read)
     end
 end
@@ -325,6 +335,7 @@ function run_ui(event)
                 currentState = pageStatus.editing
             end
         elseif event == userEvent.release.exit then
+            logger.closeFile(logger)
             return protocol.exitFunc();
         end
     -- editing value

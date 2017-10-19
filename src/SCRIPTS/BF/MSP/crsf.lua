@@ -15,6 +15,10 @@ protocol.mspSend = function(payload)
     for i=1, #(payload) do
         payloadOut[i+2] = payload[i]
     end
+    logger.append(logger, ":: CRSF Push: ")
+    logger.appendHex(logger, crsfMspCmd)
+    logger.appendHex(logger, payloadOut)
+    logger.append(logger,"\r\n")
     return crossfireTelemetryPush(crsfMspCmd, payloadOut)
 end
 

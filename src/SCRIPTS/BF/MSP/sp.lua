@@ -10,6 +10,12 @@ protocol.mspSend = function(payload)
     local value = 0
     value = payload[3] + bit32.lshift(payload[4],8)
         + bit32.lshift(payload[5],16) + bit32.lshift(payload[6],24)
+    logger.append(logger, ":: SmartPort Push: ")
+    logger.appendHex(logger, LOCAL_SENSOR_ID)
+    logger.appendHex(logger, REQUEST_FRAME_ID)
+    logger.appendHex(logger, dataId)
+    logger.appendHex(logger, value)
+    logger.append(logger,"\r\n")
     return sportTelemetryPush(LOCAL_SENSOR_ID, REQUEST_FRAME_ID, dataId, value)
 end
 
