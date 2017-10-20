@@ -20,7 +20,7 @@ The scripts have hit a fairly significant milestone.  The v1.0-rc2 is now availa
 
 If you are coming from a previous version, it's recommended to remove all files from previous installations.  Simply delete the entire /SCRIPTS/BF directory and delete CFX9.lua and/or SPX9.lua from your /SCRIPTS/TELEMETRY directory.
 
-***There are a lot of firmware versions floating around causing some confusion.  If you are running Betaflight 3.2.0 stable, at the time of this update (13-Oct-17) you must be running Crossfire firmware 2.11 in order to reliably use these scripts.  If you are running newer versions of Betaflight (3.2.1 or greater), you can reliably use these scripts from Crossfire version 2.06 or greater.***
+***There are a lot of firmware versions floating around causing some confusion.  If you are running Betaflight 3.2.0 stable or later, at the time of this update (13-Oct-17) you must be running Crossfire firmware 2.11 in order to reliably use these scripts.***
 
 !! IMPORTANT: DON'T COPY THE ENTIRE CONTENTS OF THIS REPOSITORY ONTO YOUR SDCARD !!
 
