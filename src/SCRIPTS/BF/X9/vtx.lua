@@ -25,7 +25,7 @@ return {
         { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917 }, -- RaceBand
     },
     postLoad = function (self)
-        if self.values[2] ==0 or self.values[3] == 0 or self.values[4] == 0 then
+        if self.values[2] == 0 or self.values[3] == 0 or self.values[4] == 0 then
             self.values = {}
         end
     end,
@@ -34,7 +34,7 @@ return {
         local channel = (self.values[2]-1)*8 + self.values[3]-1
         self.values[2] = bit32.band(channel,0xFF)
         self.values[3] = bit32.rshift(channel,8)
-        for i=2,#(self.values) do
+        for i=2,self.minBytes do
             valsTemp[i-1] = self.values[i]
         end
         self.values = valsTemp
