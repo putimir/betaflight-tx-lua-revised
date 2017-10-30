@@ -89,6 +89,10 @@ local function processMspReply(cmd,rx_buf)
     if cmd == Page.write then
         if Page.eepromWrite then
             eepromWrite()
+        else
+            invalidatePages()
+            currentState = pageStatus.display
+            saveTS = 0
         end
         pageRequested = false
         return
@@ -356,7 +360,11 @@ function run_ui(event)
     elseif currentState == pageStatus.saving then
         lcd.drawFilledRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,backgroundFill)
         lcd.drawRectangle(SaveBox.x,SaveBox.y,SaveBox.w,SaveBox.h,SOLID)
-        lcd.drawText(SaveBox.x+SaveBox.x_offset,SaveBox.y+SaveBox.h_offset,"Saving...",DBLSIZE + BLINK + (globalTextOptions))
+        if saveRetries <= 0 then
+            lcd.drawText(SaveBox.x+SaveBox.x_offset,SaveBox.y+SaveBox.h_offset,"Saving...",DBLSIZE + BLINK + (globalTextOptions))
+        else
+            lcd.drawText(SaveBox.x+SaveBox.x_offset,SaveBox.y+SaveBox.h_offset,"Retrying",DBLSIZE + (globalTextOptions))
+        end
     end
     processMspReply(mspPollReply())
     return 0
