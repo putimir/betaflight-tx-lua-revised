@@ -2,7 +2,7 @@
 return {
     read           = 88, -- MSP_VTX_CONFIG
     write          = 89, -- MSP_VTX_SET_CONFIG
-    eepromWrite    = false,
+    eepromWrite    = true,
     reboot         = false,
     saveMaxRetries = 2,
     saveTimeout    = 300, -- 3s
