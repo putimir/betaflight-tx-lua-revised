@@ -1,6 +1,6 @@
 local userEvent = assert(loadScript(SCRIPT_HOME.."/events.lua"))()
 
-local pageStatus = 
+local pageStatus =
 {
     display     = 2,
     editing     = 3,
@@ -8,7 +8,7 @@ local pageStatus =
     displayMenu = 5,
 }
 
-local uiMsp = 
+local uiMsp =
 {
     reboot = 68,
     eepromWrite = 250
@@ -37,9 +37,11 @@ globalTextOptions = globalTextOptions or 0
 local function saveSettings(new)
     if Page.values then
         if Page.preSave then
-            Page.preSave(Page)
+            payload = Page.preSave(Page)
+        else
+            payload = Page.values
         end
-        protocol.mspWrite(Page.write, Page.values)
+        protocol.mspWrite(Page.write, payload)
         saveTS = getTime()
         if currentState == pageStatus.saving then
             saveRetries = saveRetries + 1
@@ -68,17 +70,17 @@ local function eepromWrite()
 end
 
 local menuList = {
-    {   
+    {
         t = "save page",
-        f = saveSettings 
+        f = saveSettings
     },
     {
         t = "reload",
-        f = invalidatePages 
+        f = invalidatePages
     },
     {
         t = "reboot",
-        f = rebootFc 
+        f = rebootFc
     }
 }
 
@@ -91,8 +93,6 @@ local function processMspReply(cmd,rx_buf)
             eepromWrite()
         else
             invalidatePages()
-            currentState = pageStatus.display
-            saveTS = 0
         end
         pageRequested = false
         return
@@ -102,8 +102,6 @@ local function processMspReply(cmd,rx_buf)
             rebootFc()
         end
         invalidatePages()
-        currentState = pageStatus.display
-        saveTS = 0
         return
     end
     if cmd ~= Page.read then
@@ -241,7 +239,7 @@ local function incValue(inc)
         Page.values[f.vals[idx]] = bit32.rshift(f.value * scale, (idx-1)*8)
     end
     if f.upd and Page.values then
-        f.upd(Page) 
+        f.upd(Page)
     end
 end
 
@@ -370,4 +368,4 @@ function run_ui(event)
     return 0
 end
 
-return run_ui 
+return run_ui
