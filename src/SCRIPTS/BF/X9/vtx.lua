@@ -6,7 +6,7 @@ return {
     reboot         = false,
     saveMaxRetries = 2,
     saveTimeout    = 300, -- 3s
-    title          = "VTX",
+    title          = "VTX", 
     minBytes       = 5,
     text = {},
     fields = {
@@ -29,13 +29,14 @@ return {
             self.values = {}
         end
     end,
-    preSave = function(self)
+    preSave = function(self) 
         local valsTemp = {}
         local channel = (self.values[2]-1)*8 + self.values[3]-1
-        valsTemp[1] = bit32.band(channel,0xFF)
-        valsTemp[2] = bit32.rshift(channel,8)
-        valsTemp[3] = self.values[4]
-        valsTemp[4] = self.values[5]
+        self.values[2] = bit32.band(channel,0xFF)
+        self.values[3] = bit32.rshift(channel,8)
+        for i=2,self.minBytes do
+            valsTemp[i-1] = self.values[i]
+        end
         self.values = valsTemp
     end,
     updatePowerTable = function(self)
