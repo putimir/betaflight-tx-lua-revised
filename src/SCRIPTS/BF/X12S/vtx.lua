@@ -8,14 +8,21 @@ return {
     saveTimeout    = 300, -- 3s
     title          = "VTX",
     minBytes       = 5,
-    text = {},
+    text= {
+        { t = "Band",    x = 50,   y = 130,  to = SMLSIZE },
+        { t = "Channel", x = 50,   y = 175,  to = SMLSIZE },
+        { t = "Power",   x = 240,  y = 130,  to = SMLSIZE },
+        { t = "Pit",     x = 240,  y = 175,  to = SMLSIZE },
+        { t = "Proto",   x = 50,   y = 65,   to = SMLSIZE },
+        { t = "Freq",    x = 240,  y = 65,   to = SMLSIZE },
+    },
     fields = {
-        { t = "Band",    x =  35,  y =  68, sp = 80, min=1, max=5, vals = { 2 }, to = SMLSIZE, table = { "A", "B", "E", "F", "R" }, upd = function(self) self.updateVTXFreq(self) end },
-        { t = "Channel", x =  35,  y =  96, sp = 80, min=1, max=8, vals = { 3 }, to = SMLSIZE, upd =  function(self) self.updateVTXFreq(self) end },
-        { t = "Power",   x =  35,  y = 124, sp = 80, min=1, vals = { 4 }, to = SMLSIZE, upd = function(self) self.updatePowerTable(self) end },
-        { t = "Pit",     x =  35,  y = 152, sp = 80, min=0, max=1, vals = { 5 }, to = SMLSIZE, table = { [0]="OFF", "ON" } },
-        { t = "Dev",     x = 240,  y =  68, sp = 52, write = false, ro = true, vals = { 1 }, to = SMLSIZE, table = {[3]="SmartAudio",[4]="Tramp",[255]="None"} },
-        { t = "Freq",    x = 240,  y =  96, sp = 52, min=5000, max=6000, to = SMLSIZE, ro=true },
+        { x = 140,  y =  115, min=1, max=5, vals = { 2 }, to = DBLSIZE, table = { "A", "B", "E", "F", "R" }, upd = function(self) self.updateVTXFreq(self) end },
+        { x = 140,  y =  160, min=1, max=8, vals = { 3 }, to = DBLSIZE, upd =  function(self) self.updateVTXFreq(self) end },
+        { x = 330,  y = 115,  min=1, vals = { 4 }, to = DBLSIZE, upd = function(self) self.updatePowerTable(self) end },
+        { x = 330,  y = 160,  min=0, max=1, vals = { 5 }, to = DBLSIZE, table = { [0]="OFF", "ON" } },
+        { x = 120,  y =  65,  write = false, ro = true, vals = { 1 }, to = SMLSIZE, table = {[3]="SmartAudio",[4]="Tramp",[255]="None"} },
+        { x = 330,  y =  50,  min=5000, max=6000, to = DBLSIZE, ro=true },
     },
     freqLookup = {
         { 5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725 }, -- Boscam A
