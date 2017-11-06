@@ -71,15 +71,15 @@ end
 
 local menuList = {
     {
-        t = "save page",
+        t = "Save page",
         f = saveSettings
     },
     {
-        t = "reload",
+        t = "Reload",
         f = invalidatePages
     },
     {
-        t = "reboot",
+        t = "Reboot FC",
         f = rebootFc
     }
 }
@@ -158,8 +158,10 @@ local function requestPage()
 end
 
 function drawScreenTitle(screen_title)
-    lcd.drawFilledRectangle(0, 0, LCD_W, 10)
-    lcd.drawText(1,1,screen_title,INVERS)
+    lcd.drawFilledRectangle(0, 0, LCD_W, 30)
+	lcd.setColor(TEXT_COLOR, GREY)
+    lcd.drawText(5,5,screen_title)
+	lcd.setColor(TEXT_COLOR, WHITE)
 end
 
 local function drawScreen()
@@ -254,11 +256,12 @@ local function drawMenu()
     lcd.drawFilledRectangle(x,y,w,h,backgroundFill)
     lcd.drawRectangle(x,y,w-1,h-1,foregroundColor)
     lcd.drawText(x+h_line/2,y+h_offset,"Menu:",globalTextOptions)
+    lcd.setColor(TEXT_COLOR, LIGHTGREY)
 
     for i,e in ipairs(menuList) do
         local text_options = globalTextOptions
         if menuActive == i then
-            text_options = text_options + INVERS
+            text_options = text_options + INVERS + MIDSIZE
         end
         lcd.drawText(x+MenuBox.x_offset,y+(i-1)*h_line+h_offset,e.t,text_options)
     end
