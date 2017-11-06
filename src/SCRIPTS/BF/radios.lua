@@ -1,7 +1,7 @@
 
-supportedRadios = 
+supportedRadios =
 {
-    ["x9d"] =     
+    ["x9d"] =
     {
         templateHome    = SCRIPT_HOME.."/X9/",
         preLoad         = SCRIPT_HOME.."/X9/x9pre.lua"
@@ -11,12 +11,22 @@ supportedRadios =
         templateHome    = SCRIPT_HOME.."/X9/",
         preLoad         = SCRIPT_HOME.."/X9/x9pre.lua"
     },
-    ["x12s"] = 
+    ["x12s"] =
     {
         templateHome=SCRIPT_HOME.."/X12S/",
         preLoad=SCRIPT_HOME.."/X12S/x12spre.lua"
     },
-    ["x12s-simu"] = 
+    ["x12s-simu"] =
+    {
+        templateHome=SCRIPT_HOME.."/X12S/",
+        preLoad=SCRIPT_HOME.."/X12S/x12spre.lua"
+    },
+    ["x10"] =
+    {
+        templateHome=SCRIPT_HOME.."/X12S/",
+        preLoad=SCRIPT_HOME.."/X12S/x12spre.lua"
+    },
+    ["x10-simu"] =
     {
         templateHome=SCRIPT_HOME.."/X12S/",
         preLoad=SCRIPT_HOME.."/X12S/x12spre.lua"
